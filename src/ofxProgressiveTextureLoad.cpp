@@ -169,7 +169,7 @@ void ofxProgressiveTextureLoad::update(){
 			}break;
 
 		case LOADING_TEX:
-			//if(ofGetFrameNum()%5 == 1){
+			//if(ofGetFrameNum()%3 == 1){
 				progressiveTextureUpload(currentMipMapLevel);
 			//}
 
@@ -190,7 +190,7 @@ void ofxProgressiveTextureLoad::update(){
 			break;
 
 		case LOADING_MIP_MAPS:
-			//if(ofGetFrameNum()%5 == 1){
+			//if(ofGetFrameNum()%3 == 1){
 				progressiveTextureUpload(currentMipMapLevel);
 			//}
 			if (mipMapLevelLoaded){
@@ -254,6 +254,7 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 		if (numToLoad > numLinesPerFrame){
 			numToLoad = numLinesPerFrame;
 		}
+		numToLoad = 1;
 
 
 		if(mipmapLevel != 0 && mipMapLevelAllocPending){
@@ -286,8 +287,9 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 
 		loadedScanLinesSoFar += numToLoad;
 		c += numToLoad;
-		currentTime += timer.getMicrosSinceLastCall();
-		cout << "loop loaded " << numToLoad << " lines" << endl;
+		int timeThisLoop = timer.getMicrosSinceLastCall();
+		currentTime += timeThisLoop;
+		cout << "loop " << c << " loaded " << numToLoad << " lines and took " << timeThisLoop / 1000.0f << " ms" << endl;
 	}
 
 	//glPixelStorei(GL_UNPACK_ROW_LENGTH, 0 );
