@@ -6,6 +6,7 @@ void testApp::setup(){
 	ofBackground(22);
 	ofEnableAlphaBlending();
 	ofDisableArbTex(); //POW2 textueres, GL_TEXTURE_2D!
+	//ofEnableArbTex();
 
 	TIME_SAMPLE_SET_FRAMERATE(60);
 	TIME_SAMPLE_DISABLE_AVERAGE();
@@ -17,13 +18,13 @@ void testApp::setup(){
 	myTex = new ofTexture();
 	progressiveTextureLoader.setup(myTex, CV_INTER_AREA);
 	TS_START_NIF("Total Load Time");
-	progressiveTextureLoader.loadTexture("crap8192.jpg", true);
+	progressiveTextureLoader.loadTexture("crap8192.jpg", true /*create mipmaps*/);
 	ofAddListener(progressiveTextureLoader.textureReady, this, &testApp::textureReady);
 
 	OFX_REMOTEUI_SERVER_LOAD_FROM_XML();
 
 	plot = new ofxHistoryPlot( NULL, "frameTime", 400, false);
-	plot->setRange(0, 16.6f * 2.0f);
+	plot->setRange(0, 16.66f * 2.0f);
 	//plot->setLowerRange(0);
 	plot->addHorizontalGuide(16.66f, ofColor(0,255,0));
 	plot->setColor( ofColor(255,0,0) );
@@ -39,19 +40,18 @@ void testApp::setup(){
 void testApp::update(){
 	progressiveTextureLoader.update();
 	if(progressiveTextureLoader.isBusy()){
-		float up = TIME_SAMPLE_GET_LAST_DURATION("update()");
-		float draw = TIME_SAMPLE_GET_LAST_DURATION("update()");
-		plot->update(up+draw);
+		plot->update(TIME_SAMPLE_GET_LAST_DURATION("update()"));
 	}
 }
+
 
 void testApp::textureReady(ofxProgressiveTextureLoad::textureEvent& arg){
 	cout << "textureReady!" << endl;
 	TS_STOP_NIF("Total Load Time");
 }
 
-void testApp::draw(){
 
+void testApp::draw(){
 
 	//texture
 	ofSetColor(255);

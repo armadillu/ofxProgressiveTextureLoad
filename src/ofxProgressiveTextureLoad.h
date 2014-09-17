@@ -40,7 +40,6 @@ public:
 
 	bool isBusy(){return state != IDLE;}
 
-
 	ofEvent<textureEvent>	textureLoadFailed;
 	ofEvent<textureEvent>	textureReady;
 
@@ -77,7 +76,7 @@ private:
 
 	int 				resizeQuality;
 
-	map<int, ofPixels*>	mipmapsPixels;
+	map<int, ofPixels*>	mipMapLevelPixels;
 
 	void threadedFunction();
 	void resizeImageForMipMaps();
@@ -85,6 +84,7 @@ private:
 
 	void setState(State newState){state = newState;}
 
+	ofPoint getMipMap0ImageSize();
 
 };
 
