@@ -3,8 +3,6 @@
 
 void testApp::setup(){
 
-	ofDisableArbTex(); //POW2 textueres, GL_TEXTURE_2D!
-
 	ofBackground(22);
 	ofEnableAlphaBlending();
 	ofDisableArbTex(); //POW2 textueres, GL_TEXTURE_2D!
@@ -18,18 +16,22 @@ void testApp::setup(){
 
 	myTex = new ofTexture();
 	progressiveTextureLoader.setup(myTex);
+	TS_START_NIF("Total Load Time");
 	progressiveTextureLoader.loadTexture("crap8192.jpg", true);
+	ofAddListener(progressiveTextureLoader.textureReady, this, &testApp::textureReady);
 
 	OFX_REMOTEUI_SERVER_LOAD_FROM_XML();
 
-	plot = new ofxHistoryPlot( NULL, "frameTime", 600, false);
-	plot->setRange(0, 16.6);
+	plot = new ofxHistoryPlot( NULL, "frameTime", 400, false);
+	plot->setRange(0, 16.6f * 2.0f);
+	//plot->setLowerRange(0);
+	plot->addHorizontalGuide(16.66f, ofColor(0,255,0));
 	plot->setColor( ofColor(255,0,0) );
 	plot->setBackgroundColor(ofColor(0,220));
 	plot->setShowNumericalInfo(true);
 	plot->setRespectBorders(true);
 	plot->setLineWidth(1);
-	plot->setShowSmoothedCurve(true);
+	plot->setShowSmoothedCurve(false);
 	plot->setSmoothFilter(0.04);
 
 }
@@ -44,7 +46,10 @@ void testApp::update(){
 	}
 }
 
-
+void testApp::textureReady(ofxProgressiveTextureLoad::textureEvent& arg){
+	cout << "textureReady!" << endl;
+	TS_STOP_NIF("Total Load Time");
+}
 
 void testApp::draw(){
 
@@ -52,18 +57,17 @@ void testApp::draw(){
 	//texture
 	ofSetColor(255);
 
-
-	progressiveTextureLoader.draw();
-
+	progressiveTextureLoader.draw(20, 50);
 
 	//clock
+	float s = 200;
 	ofPushMatrix();
-	ofTranslate(50, 200);
+	ofTranslate(ofGetWidth()/2, ofGetHeight()/2);
 	ofSetColor(0);
-	ofCircle(0, 0, 50);
+	ofCircle(0, 0, s);
 	ofRotate(ofGetFrameNum() * 3.0, 0, 0, 1);
 	ofSetColor(255);
-	ofRect(0, 0, 50, 4);
+	ofRect(0, 0, s, 5);
 	ofPopMatrix();
 
 	ofxGLError::draw(20,20);

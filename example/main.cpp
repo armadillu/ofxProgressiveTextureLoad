@@ -12,7 +12,7 @@ int main( ){
 	//win.setMultiDisplayFullscreen(true);
 	//win.set
 
-	ofSetupOpenGL(1024,1024, OF_WINDOW);	// <-------- setup the GL context
+	ofSetupOpenGL(1800,1024, OF_WINDOW);	// <-------- setup the GL context
 
 	TIME_SAMPLE_SET_FRAMERATE(60);
 	TIME_SAMPLE_DISABLE_AVERAGE();

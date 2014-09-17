@@ -11,6 +11,7 @@
 
 #include "ofMain.h"
 #include "ofxMSATimer.h"
+#include "ofxOpenCv.h"
 
 
 class ofxProgressiveTextureLoad: public ofThread{
@@ -18,20 +19,20 @@ class ofxProgressiveTextureLoad: public ofThread{
 public:
 
 	ofxProgressiveTextureLoad();
-	void setup(ofTexture* tex);
+	void setup(ofTexture* tex, int resizeQuality = CV_INTER_CUBIC);
 
 	void loadTexture(string path, bool withMipMaps);
 	void update();
 
-	void draw();
+	void draw(int, int);
 
-	struct ofxProgressiveTextureLoadEvent{
+	struct textureEvent{
 		bool							loaded;
-		ofxProgressiveTextureLoadEvent *	who;
-		ofTexture						tex;
+		ofxProgressiveTextureLoad*		who;
+		ofTexture*						tex;
 		string							texturePath;
 
-		ofxProgressiveTextureLoadEvent(){
+		textureEvent(){
 			loaded = true;
 			who = NULL;
 		}
@@ -40,8 +41,8 @@ public:
 	bool isBusy(){return state != IDLE;}
 
 
-	ofEvent<ofxProgressiveTextureLoadEvent>	textureLoadFailed;
-	ofEvent<ofxProgressiveTextureLoadEvent>	textureReady;
+	ofEvent<textureEvent>	textureLoadFailed;
+	ofEvent<textureEvent>	textureReady;
 
 private:
 
@@ -73,6 +74,8 @@ private:
 	bool 				mipMapLevelLoaded;
 	int					currentMipMapLevel;
 	bool				mipMapLevelAllocPending;
+
+	int 				resizeQuality;
 
 	map<int, ofPixels*>	mipmapsPixels;
 
