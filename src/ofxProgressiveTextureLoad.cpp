@@ -91,7 +91,7 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 			pix->setFromPixels(mipMap0.data, newS, newS, numC/*RGB*/);
 			mipmapsPixels[0] = pix;
 			TS_STOP_NIF("resize mipmap 0");
-			ofSaveImage(*pix, "pix" + ofToString(0) + ".jpg" ); //debug!
+			//ofSaveImage(*pix, "pix" + ofToString(0) + ".jpg" ); //debug!
 
 			if(createMipMaps){
 				for(int currentMipMapLevel = 1 ; currentMipMapLevel < mipMapLevel; currentMipMapLevel++){
@@ -104,7 +104,7 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 					mipmapsPixels[currentMipMapLevel] = tmpPix;
 					ofLog() << "mipmaps for level " << currentMipMapLevel << " ready (" << tmpPix->getWidth() << ", " << tmpPix->getWidth()<< ")";
 					TS_STOP_NIF("resize mipmap " + ofToString(currentMipMapLevel));
-					ofSaveImage(*tmpPix, "pix" + ofToString(currentMipMapLevel) + ".jpg" ); //debug!
+					//ofSaveImage(*tmpPix, "pix" + ofToString(currentMipMapLevel) + ".jpg" ); //debug!
 				}
 			}
 			}break;
@@ -127,7 +127,7 @@ void ofxProgressiveTextureLoad::update(){
 			ofPixels & pix = originalImage.getPixelsRef();
 			texture->allocate(newW, newH,
 							  ofGetGlInternalFormat(pix),
-							  createMipMaps? true : ofGetUsingArbTex(),
+							  createMipMaps ? false : ofGetUsingArbTex(), //arb! no arb when creating mipmaps
 							  ofGetGlFormat(pix),
 							  ofGetGlType(pix));
 			originalImage.clear(); //dealloc original image, we have all the ofPixels in a map!
