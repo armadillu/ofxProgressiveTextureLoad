@@ -15,7 +15,7 @@ void testApp::setup(){
 	OFX_REMOTEUI_SERVER_SET_UPCOMING_PARAM_GROUP("DEBUG");
 
 	myTex = new ofTexture();
-	progressiveTextureLoader.setup(myTex);
+	progressiveTextureLoader.setup(myTex, CV_INTER_AREA);
 	TS_START_NIF("Total Load Time");
 	progressiveTextureLoader.loadTexture("crap8192.jpg", true);
 	ofAddListener(progressiveTextureLoader.textureReady, this, &testApp::textureReady);
@@ -33,7 +33,6 @@ void testApp::setup(){
 	plot->setLineWidth(1);
 	plot->setShowSmoothedCurve(false);
 	plot->setSmoothFilter(0.04);
-
 }
 
 
