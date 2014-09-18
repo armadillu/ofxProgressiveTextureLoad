@@ -241,7 +241,7 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 	timer.getMicrosSinceLastCall();
 
 	ofPixels * pix = mipMapLevelPixels[mipmapLevel];
-	int scanlinesLoaded = 0;
+	int scanlinesLoadedThisFrame = 0;
 	int loops = 0;
 
 	ofSetPixelStorei(pix->getWidth(),1,ofGetNumChannelsFromGLFormat(glFormat));
@@ -255,8 +255,6 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 		if (numLinesToLoadThisLoop > numLinesPerLoop){
 			numLinesToLoadThisLoop = numLinesPerLoop;
 		}
-		//numToLoad = 64;
-
 
 		if(mipmapLevel != 0 && mipMapLevelAllocPending){
 			TS_START_NIF("glTexImage2D mipmap " + ofToString(currentMipMapLevel));
@@ -287,17 +285,17 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 						);
 
 		loadedScanLinesSoFar += numLinesToLoadThisLoop;
-		scanlinesLoaded += numLinesToLoadThisLoop;
-		loops++;
+		scanlinesLoadedThisFrame += numLinesToLoadThisLoop;
 		int timeThisLoop = timer.getMicrosSinceLastCall();
 		currentTime += timeThisLoop;
-		cout << "loop " << scanlinesLoaded << " loaded " << numLinesToLoadThisLoop
+		cout << "loop " << loops << " loaded " << numLinesToLoadThisLoop
 		<< " lines and took " << timeThisLoop / 1000.0f << " ms" << endl;
+		loops++;
 	}
 
 	//glPixelStorei(GL_UNPACK_ROW_LENGTH, 0 );
 	cout << "mipmapLevel " << mipmapLevel << " spent " << currentTime / 1000.0f << " ms and loaded "
-	<< scanlinesLoaded << " lines across "<< loops << " loops" << endl;
+	<< scanlinesLoadedThisFrame << " lines across "<< loops << " loops" << endl;
 
 	if (loadedScanLinesSoFar >= pix->getHeight()){ //done!
 		mipMapLevelLoaded = true;
