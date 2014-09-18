@@ -13,7 +13,7 @@
 
 ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 
-	numLinesPerFrame = 16;
+	numLinesPerLoop = 16;
 	maxTimeTakenPerFrame = 0.5; //ms
 	state = IDLE;
 }
@@ -22,8 +22,9 @@ void ofxProgressiveTextureLoad::setup(ofTexture* tex, int resizeQuality_){
 
 	resizeQuality = resizeQuality_;
 	texture = tex;
-	RUI_SHARE_PARAM(numLinesPerFrame, 1, 256);
+	RUI_SHARE_PARAM(numLinesPerLoop, 1, 256);
 	RUI_SHARE_PARAM(maxTimeTakenPerFrame, 0.1, 8); //ms
+	RUI_WATCH_PARAM(numLinesPerLoop);
 
 }
 
@@ -237,23 +238,22 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 	texture->bind();
 	uint64_t currentTime = 0;
 	int numC = ofGetNumChannelsFromGLFormat(glFormat);
-
-
 	timer.getMicrosSinceLastCall();
 
 	ofPixels * pix = mipMapLevelPixels[mipmapLevel];
-	int c = 0;
+	int scanlinesLoaded = 0;
+	int loops = 0;
 
 	ofSetPixelStorei(pix->getWidth(),1,ofGetNumChannelsFromGLFormat(glFormat));
 	//glPixelStorei(GL_UNPACK_ROW_LENGTH, pix->getWidth());
 
-	while (currentTime < maxTimeTakenPerFrame * 1000.0f && loadedScanLinesSoFar < pix->getHeight() && c < numLinesPerFrame ) {
+	while (currentTime < maxTimeTakenPerFrame * 1000.0f && loadedScanLinesSoFar < pix->getHeight()) {
 
 		unsigned char * data = pix->getPixels() + numC * (int)pix->getWidth() * loadedScanLinesSoFar;
 
-		int numToLoad = pix->getHeight() - loadedScanLinesSoFar;
-		if (numToLoad > numLinesPerFrame){
-			numToLoad = numLinesPerFrame;
+		int numLinesToLoadThisLoop = pix->getHeight() - loadedScanLinesSoFar;
+		if (numLinesToLoadThisLoop > numLinesPerLoop){
+			numLinesToLoadThisLoop = numLinesPerLoop;
 		}
 		//numToLoad = 64;
 
@@ -280,21 +280,24 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 						0,								//x offset
 						loadedScanLinesSoFar,			//y offset
 						pix->getWidth(),				//width
-						numToLoad,						//height >> numLinesPerFrame line per iteration
+						numLinesToLoadThisLoop,						//height >> numLinesPerLoop line per iteration
 						glFormat,						//format
 						glPixelType,					//type
 						data							//pixels
 						);
 
-		loadedScanLinesSoFar += numToLoad;
-		c += numToLoad;
+		loadedScanLinesSoFar += numLinesToLoadThisLoop;
+		scanlinesLoaded += numLinesToLoadThisLoop;
+		loops++;
 		int timeThisLoop = timer.getMicrosSinceLastCall();
 		currentTime += timeThisLoop;
-		cout << "loop " << c << " loaded " << numToLoad << " lines and took " << timeThisLoop / 1000.0f << " ms" << endl;
+		cout << "loop " << scanlinesLoaded << " loaded " << numLinesToLoadThisLoop
+		<< " lines and took " << timeThisLoop / 1000.0f << " ms" << endl;
 	}
 
 	//glPixelStorei(GL_UNPACK_ROW_LENGTH, 0 );
-	cout << "mipmapLevel " << mipmapLevel << " spent " << currentTime / 1000.0f << " ms and loaded " << c << " lines" << endl;
+	cout << "mipmapLevel " << mipmapLevel << " spent " << currentTime / 1000.0f << " ms and loaded "
+	<< scanlinesLoaded << " lines across "<< loops << " loops" << endl;
 
 	if (loadedScanLinesSoFar >= pix->getHeight()){ //done!
 		mipMapLevelLoaded = true;

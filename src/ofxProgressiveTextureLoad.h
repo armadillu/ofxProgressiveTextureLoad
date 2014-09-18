@@ -61,7 +61,7 @@ private:
 	ofxMSATimer			timer;
 
 	// speed params
-	int 				numLinesPerFrame; //we can increase that to reduce overhead
+	int 				numLinesPerLoop; //we can increase that to reduce overhead
 	float 				maxTimeTakenPerFrame; //ms to spend loading tex data on a single frame
 	int 				loadedScanLinesSoFar;
 
