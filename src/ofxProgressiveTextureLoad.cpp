@@ -255,7 +255,7 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 		if (numToLoad > numLinesPerFrame){
 			numToLoad = numLinesPerFrame;
 		}
-		//numToLoad = 1;
+		//numToLoad = 64;
 
 
 		if(mipmapLevel != 0 && mipMapLevelAllocPending){
