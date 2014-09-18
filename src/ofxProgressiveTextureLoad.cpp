@@ -167,8 +167,9 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 			originalImage.clear(); //dealloc original image, we have all the ofPixels in a map!
 			mipMapLevelLoaded = false;
 			if(createMipMaps){
-				currentMipMapLevel = mipMapLevelPixels.size() - 1; //start by loading the smallest image (deepest mipmap)
+				currentMipMapLevel = 0; //start by loading the smallest image (deepest mipmap)
 				setState(LOADING_MIP_MAPS);
+				cout << "start " << currentMipMapLevel << endl;
 				TS_START_NIF("upload mipmap " + ofToString(currentMipMapLevel));
 			}else{
 				currentMipMapLevel = 0;
@@ -187,32 +188,28 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 			break;
 
 		case LOADING_MIP_MAPS:
-			progressiveTextureUpload(currentMipMapLevel);
 
-			texture->setTextureMinMagFilter(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
-			//texture->setTextureMinMagFilter(GL_LINEAR, GL_LINEAR);
 
 			if (mipMapLevelLoaded){
 
 				mipMapLevelLoaded = false;
 				mipMapLevelAllocPending = true;
 
-//				glTexParameteri(texture->getTextureData().textureTarget, GL_TEXTURE_BASE_LEVEL, currentMipMapLevel);
-//				glTexParameteri(texture->getTextureData().textureTarget, GL_TEXTURE_MAX_LEVEL, mipMapLevelPixels.size());
 
 				TS_STOP_NIF("upload mipmap " + ofToString(currentMipMapLevel));
 
-				if (currentMipMapLevel == 0){ //all mipmaps loaded! done!
-
-					cout << "stop " << currentMipMapLevel << endl;
-					TS_STOP_NIF("upload mipmap " + ofToString(currentMipMapLevel));
+				if (currentMipMapLevel == mipMapLevelPixels.size() - 1){ //all mipmaps loaded! done!
+					texture->setTextureMinMagFilter(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
 					wrapUp();
+					glTexParameteri(texture->getTextureData().textureTarget, GL_TEXTURE_BASE_LEVEL, 0);
+					glTexParameteri(texture->getTextureData().textureTarget, GL_TEXTURE_MAX_LEVEL, 4);
 
 				}else{
-					currentMipMapLevel--;
-					cout << "start " << currentMipMapLevel << endl;
+					currentMipMapLevel++;
 					TS_START_NIF("upload mipmap " + ofToString(currentMipMapLevel));
 				}
+			}else{
+				progressiveTextureUpload(currentMipMapLevel);
 			}
 			break;
 	}
@@ -303,7 +300,7 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 	}
 
 	//glPixelStorei(GL_UNPACK_ROW_LENGTH, 0 );
-	cout << "mipmapLevel " << mipmapLevel << " spent " << currentTime / 1000.0f << " ms and loaded " << scanlinesLoadedThisFrame << " lines across "<< loops << " loops" << endl;
+	//cout << "mipmapLevel " << mipmapLevel << " spent " << currentTime / 1000.0f << " ms and loaded " << scanlinesLoadedThisFrame << " lines across "<< loops << " loops" << endl;
 
 	if (loadedScanLinesSoFar >= pix->getHeight()){ //done!
 		mipMapLevelLoaded = true;
