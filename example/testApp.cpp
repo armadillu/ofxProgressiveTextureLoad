@@ -38,7 +38,6 @@ void testApp::setup(){
 
 
 void testApp::update(){
-	progressiveTextureLoader.update();
 	if(progressiveTextureLoader.isBusy()){
 		plot->update(TIME_SAMPLE_GET_LAST_DURATION("update()"));
 	}

@@ -22,7 +22,6 @@ public:
 	void setup(ofTexture* tex, int resizeQuality = CV_INTER_CUBIC);
 
 	void loadTexture(string path, bool withMipMaps);
-	void update();
 
 	void draw(int, int);
 
@@ -78,7 +77,9 @@ private:
 
 	map<int, ofPixels*>	mipMapLevelPixels;
 
+	void update(ofEventArgs &d);
 	void threadedFunction();
+	void wrapUp();
 	void resizeImageForMipMaps();
 	void progressiveTextureUpload(int mipmapLevel);
 
