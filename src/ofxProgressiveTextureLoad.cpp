@@ -9,12 +9,13 @@
 #include "ofxProgressiveTextureLoad.h"
 #include "ofxTimeMeasurements.h"
 #include "ofxRemoteUIServer.h"
+#include <math.h>
 
 ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 
 	numLinesPerFrame = 16;
 	maxTimeTakenPerFrame = 0.5; //ms
-	state == IDLE;
+	state = IDLE;
 }
 
 void ofxProgressiveTextureLoad::setup(ofTexture* tex, int resizeQuality_){
@@ -77,7 +78,7 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 			ofPoint targetSize = getMipMap0ImageSize();
 			int newW = targetSize.x;
 			int newH = targetSize.y;
-			int mipMapLevel = floor(log2(MAX(newW, newH))) + 1; //THIS IS KEY! you need to do all mipmap levels or it will draw blank tex!
+			int mipMapLevel = floor(log( MAX(newW, newH) ) / log( 2 )) + 1; //THIS IS KEY! you need to do all mipmap levels or it will draw blank tex!
 
 			TS_START_NIF("resize mipmap 0");
 			//fill in an opencv image
@@ -254,7 +255,7 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 		if (numToLoad > numLinesPerFrame){
 			numToLoad = numLinesPerFrame;
 		}
-		numToLoad = 1;
+		//numToLoad = 1;
 
 
 		if(mipmapLevel != 0 && mipMapLevelAllocPending){
