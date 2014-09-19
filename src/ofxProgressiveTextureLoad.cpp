@@ -7,36 +7,36 @@
 //
 
 #include "ofxProgressiveTextureLoad.h"
-#include "ofxTimeMeasurements.h"
-#include "ofxRemoteUIServer.h"
 #include <math.h>
 
 ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 
 	numLinesPerLoop = 16;
-	maxTimeTakenPerFrame = 0.5; //ms
+	maxTimeTakenPerFrame = 1.0; //ms
 	state = IDLE;
+	verbose = false;
+	lastFrameTime = 0.0f;
+	texLodBias = -0.5;
+	texture = NULL;
 }
 
 void ofxProgressiveTextureLoad::setup(ofTexture* tex, int resizeQuality_){
 
 	resizeQuality = resizeQuality_;
 	texture = tex;
-	RUI_SHARE_PARAM(numLinesPerLoop, 1, 256);
-	RUI_SHARE_PARAM(maxTimeTakenPerFrame, 0.1, 8); //ms
-	RUI_WATCH_PARAM(numLinesPerLoop);
-
 }
 
 void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 
-	if (state == IDLE){
+	if (state == IDLE && texture){
+		startTime = ofGetElapsedTimef();
 		createMipMaps = withMipMaps;
 		pendingNotification = false;
 		loadedScanLinesSoFar = 0;
 		imagePath = path;
 		setState(LOADING_PIXELS);
 		startThread();
+		ofAddListener(ofEvents().update, this, &ofxProgressiveTextureLoad::update);
 	}else{
 		ofLogError() << "cant load texture, busy!";
 	}
@@ -48,14 +48,21 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 	while(isThreadRunning()){
 
 		switch (state) {
-			case LOADING_PIXELS:
-				TS_START("loadPix");
+
+			case LOADING_PIXELS:{
+				TS_START_NIF("loadPix");
 				originalImage.setUseTexture(false);
-				originalImage.loadImage(imagePath);
-				//originalImage.setImageType(OF_IMAGE_COLOR_ALPHA); //testing rgba maybe faster upload?
-				TS_STOP("loadPix");
-				setState(RESIZING_FOR_MIPMAPS);
-				break;
+				bool ok = originalImage.loadImage(imagePath);
+				if (!ok){
+					setState(LOADING_FAILED);
+					ofLogError() << "ofxProgressiveTextureLoad: img loading failed! " << imagePath;
+					stopThread();
+				}else{
+					//originalImage.setImageType(OF_IMAGE_COLOR_ALPHA); //testing rgba maybe faster upload?
+					TS_STOP_NIF("loadPix");
+					setState(RESIZING_FOR_MIPMAPS);
+				}
+				}break;
 
 			case RESIZING_FOR_MIPMAPS:
 				resizeImageForMipMaps();
@@ -144,9 +151,20 @@ ofPoint ofxProgressiveTextureLoad::getMipMap0ImageSize(){
 }
 
 
-void ofxProgressiveTextureLoad::update(){
+bool ofxProgressiveTextureLoad::isReadyToDrawWhileLoading(){
+	if(isBusy() && createMipMaps){
+		return (state == LOADING_MIP_MAPS && currentMipMapLevel < mipMapLevelPixels.size() - 3 );
+	}
+	return false;
+}
+
+void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 
 	switch (state) {
+
+		case LOADING_FAILED:{
+			pendingNotification = true;
+		}break;
 
 		case ALLOC_TEXTURE:{
 			texture->clear();
@@ -161,71 +179,113 @@ void ofxProgressiveTextureLoad::update(){
 							  ofGetGlFormat(pix),
 							  ofGetGlType(pix)
 							  );
+
+			//setup OF texture sizes!
+			if(texture->texData.textureTarget == GL_TEXTURE_RECTANGLE_ARB){
+				texture->texData.tex_t = pix.getWidth();
+				texture->texData.tex_u = pix.getHeight();
+			}else{
+				texture->texData.tex_t = 1;
+				texture->texData.tex_u = 1;
+			}
+			texture->texData.tex_w = pix.getWidth();
+			texture->texData.tex_h = pix.getHeight();
+			texture->texData.width = pix.getWidth();
+			texture->texData.height = pix.getHeight();
+
 			originalImage.clear(); //dealloc original image, we have all the ofPixels in a map!
 			mipMapLevelLoaded = false;
-			currentMipMapLevel = 0;
-			glGenerateMipmap(texture->getTextureData().textureTarget);
-			setState(LOADING_TEX);
+			if(createMipMaps){
+				currentMipMapLevel = mipMapLevelPixels.size() - 1; //start by loading the smallest image (deepest mipmap)
+				setState(LOADING_MIP_MAPS);
+				TS_START_NIF("upload mipmap " + ofToString(currentMipMapLevel));
+				
+			}else{
+				currentMipMapLevel = 0;
+				setState(LOADING_TEX);
+			}
 			TS_START_NIF("upload mipmap 0");
 			}break;
 
 		case LOADING_TEX:
-			//if(ofGetFrameNum()%3 == 1){
-				progressiveTextureUpload(currentMipMapLevel);
-			//}
-
-			if (mipMapLevelLoaded){ //mipmap0 is loaded! now for the smaller levels!
+			progressiveTextureUpload(currentMipMapLevel);
+			if (mipMapLevelLoaded){
 				TS_STOP_NIF("upload mipmap 0");
-				if(createMipMaps){
-					currentMipMapLevel++; //continue into mipmap 1
-					mipMapLevelLoaded = false;
-					mipMapLevelAllocPending = true;
-					TS_START_NIF("upload mipmap " + ofToString(currentMipMapLevel));
-					setState(LOADING_MIP_MAPS);
-				}else{
-					texture->setTextureMinMagFilter(GL_LINEAR, GL_LINEAR);
-					pendingNotification = true;
-					setState(IDLE);
-				}
+				texture->setTextureMinMagFilter(GL_LINEAR, GL_LINEAR);
+				wrapUp();
 			}
 			break;
 
 		case LOADING_MIP_MAPS:
-			//if(ofGetFrameNum()%3 == 1){
-				progressiveTextureUpload(currentMipMapLevel);
-			//}
+
 			if (mipMapLevelLoaded){
+
+				texture->bind();
+				glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_BASE_LEVEL, currentMipMapLevel);
+				glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAX_LEVEL, mipMapLevelPixels.size() - 2);
+				int mipmapsLoaded = mipMapLevelPixels.size() - currentMipMapLevel;
+				if (mipmapsLoaded == 4){ //notify the user that the texture is drawable right now, and will progressivelly draw
+					textureEvent ev;
+					ev.loaded = true;
+					ev.who = this;
+					ev.tex = texture;
+					ev.elapsedTime = ofGetElapsedTimef() - startTime;
+					ev.texturePath = imagePath;
+					ofNotifyEvent(textureDrawable, ev, this);
+				}
+				if (mipmapsLoaded >= 4){
+					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_LOD_BIAS, texLodBias);
+				}
+				//glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, ofMap(ofGetMouseX(), 0, ofGetWidth(), -3, 3, true)); //shoot for sharper test
+				texture->unbind();
+
 				mipMapLevelLoaded = false;
 				mipMapLevelAllocPending = true;
+
 				TS_STOP_NIF("upload mipmap " + ofToString(currentMipMapLevel));
-				currentMipMapLevel++;
-				TS_START_NIF("upload mipmap " + ofToString(currentMipMapLevel));
-				if (currentMipMapLevel == mipMapLevelPixels.size()){
-					//done!
-					glTexParameteri(texture->getTextureData().textureTarget, GL_TEXTURE_BASE_LEVEL, 0);
-					glTexParameteri(texture->getTextureData().textureTarget, GL_TEXTURE_MAX_LEVEL, mipMapLevelPixels.size());
-					texture->setTextureMinMagFilter(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
-					setState(IDLE);
-					TS_STOP_NIF("upload mipmap " + ofToString(currentMipMapLevel));
-					//delete all mipmap pixels
-					for(int i = 0; i < mipMapLevelPixels.size(); i++){
-						delete mipMapLevelPixels[i];
-					}
-					mipMapLevelPixels.clear();
-					pendingNotification = true;
+
+				if (currentMipMapLevel == 0){ //all mipmaps loaded! done!
+					wrapUp();
+				}else{
+					currentMipMapLevel--;
+					TS_START_NIF("upload mipmap " + ofToString(currentMipMapLevel));
 				}
+			}else{
+				progressiveTextureUpload(currentMipMapLevel);
 			}
 			break;
 	}
 
 	if(pendingNotification){
+
 		pendingNotification = false;
 		textureEvent ev;
+		if (state == LOADING_FAILED ){
+			ev.loaded = false;
+		}else{
+			ev.loaded = true;
+		}
 		ev.who = this;
 		ev.tex = texture;
+		ev.elapsedTime = ofGetElapsedTimef() - startTime;
 		ev.texturePath = imagePath;
 		ofNotifyEvent(textureReady, ev, this);
+		setState(IDLE);
 	}
+}
+
+void ofxProgressiveTextureLoad::wrapUp(){
+
+	ofRemoveListener(ofEvents().update, this, &ofxProgressiveTextureLoad::update);
+	//delete all mipmap pixels
+	for(int i = 0; i < mipMapLevelPixels.size(); i++){
+		delete mipMapLevelPixels[i];
+	}
+	mipMapLevelPixels.clear();
+	pendingNotification = true;
+	setState(IDLE);
 }
 
 
@@ -243,10 +303,9 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 	int scanlinesLoadedThisFrame = 0;
 	int loops = 0;
 
-	ofSetPixelStorei(pix->getWidth(),1,ofGetNumChannelsFromGLFormat(glFormat));
-	//glPixelStorei(GL_UNPACK_ROW_LENGTH, pix->getWidth());
+	ofSetPixelStorei(pix->getWidth(), 1, ofGetNumChannelsFromGLFormat(glFormat));
 
-	while (currentTime < maxTimeTakenPerFrame * 1000.0f && loadedScanLinesSoFar < pix->getHeight()) {
+	while (currentTime < maxTimeTakenPerFrame * 1000.0f && loadedScanLinesSoFar < pix->getHeight() && loops == 0) {
 
 		unsigned char * data = pix->getPixels() + numC * (int)pix->getWidth() * loadedScanLinesSoFar;
 
@@ -255,7 +314,7 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 			numLinesToLoadThisLoop = numLinesPerLoop;
 		}
 
-		if(mipmapLevel != 0 && mipMapLevelAllocPending){
+		if( mipMapLevelAllocPending){ //level 0 mipmap is already allocated!
 			TS_START_NIF("glTexImage2D mipmap " + ofToString(currentMipMapLevel));
 			mipMapLevelAllocPending = false;
 			glTexImage2D(texture->texData.textureTarget,	//target
@@ -268,7 +327,6 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 						 glPixelType,						//type
 						 0 );								//pixels
 
-			cout << "!!! glTexImage2D " << mipmapLevel << endl;
 			TS_STOP_NIF("glTexImage2D mipmap " + ofToString(currentMipMapLevel));
 		}
 
@@ -287,14 +345,13 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 		scanlinesLoadedThisFrame += numLinesToLoadThisLoop;
 		int timeThisLoop = timer.getMicrosSinceLastCall();
 		currentTime += timeThisLoop;
-		cout << "loop " << loops << " loaded " << numLinesToLoadThisLoop
-		<< " lines and took " << timeThisLoop / 1000.0f << " ms" << endl;
+		if(verbose) cout << "loop " << loops << " loaded " << numLinesToLoadThisLoop << " lines and took " << timeThisLoop / 1000.0f << " ms" << endl;
 		loops++;
 	}
 
-	//glPixelStorei(GL_UNPACK_ROW_LENGTH, 0 );
-	cout << "mipmapLevel " << mipmapLevel << " spent " << currentTime / 1000.0f << " ms and loaded "
-	<< scanlinesLoadedThisFrame << " lines across "<< loops << " loops" << endl;
+	if(verbose) cout << "mipmapLevel " << mipmapLevel << " spent " << currentTime / 1000.0f << " ms and loaded " << scanlinesLoadedThisFrame << " lines across "<< loops << " loops" << endl;
+
+	lastFrameTime = currentTime / 1000.0f; //in ms!
 
 	if (loadedScanLinesSoFar >= pix->getHeight()){ //done!
 		mipMapLevelLoaded = true;
@@ -308,11 +365,19 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 
 void ofxProgressiveTextureLoad::draw(int x, int y){
 
-	if(state==IDLE){
-		ofSetColor(255);
-		texture->draw(0,0,
-					  ofGetMouseX() > 50 ? ofGetMouseX() : 50,
-					  ofGetMouseY() > 50 ? ofGetMouseY() : 50);
+	if(texture){
+		if(isReadyToDrawWhileLoading() || state == IDLE ){
+			ofSetColor(255);
+			float ar = texture->getWidth() / float(texture->getHeight());
+			float xx = (texture->getWidth() - ofGetWidth()) * (ofGetMouseX() / float(ofGetWidth()));
+			float yy = (texture->getHeight() - ofGetHeight()) * (ofGetMouseY() / float(ofGetHeight()));
+			texture->draw(-xx, -yy);
+			texture->draw(0,
+						  0,
+						  ofClamp(ofGetMouseX(), 10, 300),
+						  ofClamp(ofGetMouseY(), 10, 300 / ar)
+						  );
+		}
 	}
 
 	string msg;

@@ -13,24 +13,54 @@
 #include "ofxMSATimer.h"
 #include "ofxOpenCv.h"
 
+//define MEAURE_TIMINGS as FALSE to not measure timings with ofxTimeMeasurements
+#define MEAURE_TIMINGS TRUE
+
+#if(MEAURE_TIMINGS)
+	#include "ofxTimeMeasurements.h"
+#else
+	#undef TS_START_NIF
+	#undef TS_STOP_NIF
+	#define TS_START_NIF(x) ;
+	#define TS_STOP_NIF(x)	;
+#endif
+
 
 class ofxProgressiveTextureLoad: public ofThread{
 
 public:
 
 	ofxProgressiveTextureLoad();
+
 	void setup(ofTexture* tex, int resizeQuality = CV_INTER_CUBIC);
-
 	void loadTexture(string path, bool withMipMaps);
-	void update();
 
-	void draw(int, int);
+	//for each update() call (one frame), the addon will loop uploading texture regions
+	//as scanlines, until we reach the target time per frame to be spent uploading texture data
+	//how many scanlines per loop will determine the granularity of the time accuracy. Less scanlines
+	//add more overhead, but should lead to more accurate stop times.
+	void setScanlinesPerLoop(int numLines){numLinesPerLoop = numLines;}
+
+	//how much time do you want ofxProgressiveTextureLoad to spend uploading data to the gpu per frame
+	void setTargetTimePerFrame(float ms){maxTimeTakenPerFrame = ms;}
+
+	//in mipmap levels. used to tweak which mipmap to use; helps make mipmaps sharper or blurrier.
+	//0 is neutral; negative is lower mipmaps (sharper), positive is higher mipmaps (blurrier)
+	void setTexLodBias(float bias){texLodBias = bias;}
+	bool isReadyToDrawWhileLoading();
+
+	float getTimeSpentLastFrame(){ return lastFrameTime;} //in ms!
+	void setVerbose(bool v){verbose = v;}
+	bool isBusy(){return state != IDLE;}
+
+	void draw(int, int); //for debug purposes!
 
 	struct textureEvent{
 		bool							loaded;
 		ofxProgressiveTextureLoad*		who;
 		ofTexture*						tex;
 		string							texturePath;
+		float 							elapsedTime;
 
 		textureEvent(){
 			loaded = true;
@@ -38,16 +68,16 @@ public:
 		}
 	};
 
-	bool isBusy(){return state != IDLE;}
-
-	ofEvent<textureEvent>	textureLoadFailed;
-	ofEvent<textureEvent>	textureReady;
+	ofEvent<textureEvent>	textureReady; //will notify when texture is fully loaded, or failed to load
+	ofEvent<textureEvent>	textureDrawable; //will notfy when texture is drawable,
+											//it will   begind drawing in low res, and progressivelly improve!
 
 private:
 
 	enum State{
 				IDLE,
 				LOADING_PIXELS,
+				LOADING_FAILED,
 				RESIZING_FOR_MIPMAPS,
 				ALLOC_TEXTURE,
 				LOADING_TEX,
@@ -65,6 +95,7 @@ private:
 	float 				maxTimeTakenPerFrame; //ms to spend loading tex data on a single frame
 	int 				loadedScanLinesSoFar;
 
+	bool 				verbose;
 
 	string				imagePath;
 	bool 				createMipMaps;
@@ -75,10 +106,15 @@ private:
 	bool				mipMapLevelAllocPending;
 
 	int 				resizeQuality;
+	float 				startTime;
+	float				lastFrameTime;
+	float				texLodBias;
 
 	map<int, ofPixels*>	mipMapLevelPixels;
 
+	void update(ofEventArgs &d);
 	void threadedFunction();
+	void wrapUp();
 	void resizeImageForMipMaps();
 	void progressiveTextureUpload(int mipmapLevel);
 

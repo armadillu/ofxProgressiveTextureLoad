@@ -1,10 +1,10 @@
 #pragma once
 
 #include "ofMain.h"
-#include "ofxTimeMeasurements.h"
 #include "ofxHistoryPlot.h"
-#include "ofxRemoteUIServer.h"
 #include "ofxProgressiveTextureLoad.h"
+
+//just in case we overrode it in ofxProgressiveTextureLoad.h by disabling measurements
 
 #include "ofxMSATimer.h"
 
@@ -25,10 +25,11 @@ class testApp : public ofBaseApp{
 		void gotMessage(ofMessage msg);
 
 		void textureReady(ofxProgressiveTextureLoad::textureEvent& arg);
+		void textureDrawable(ofxProgressiveTextureLoad::textureEvent& arg);
 
 	ofTexture * myTex;
 	ofxProgressiveTextureLoad progressiveTextureLoader;
-
+	bool textureReadyToDraw;
 	ofxHistoryPlot * plot;
 
 	void threadedFunction();

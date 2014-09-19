@@ -1,31 +1,42 @@
 #include "testApp.h"
 #include "ofxGLError.h"
 
+#include "ofxTimeMeasurements.h"
+
+string imgName = "huge.jpg";
+
 void testApp::setup(){
 
-	ofBackground(22);
+	ofBackground(33);
 	ofEnableAlphaBlending();
 	ofSetVerticalSync(true);
 	ofSetFrameRate(60);
 	ofDisableArbTex(); //POW2 textueres, GL_TEXTURE_2D!
 	//ofEnableArbTex();
 
+	textureReadyToDraw = false;
+
 	TIME_SAMPLE_SET_FRAMERATE(60);
 	TIME_SAMPLE_DISABLE_AVERAGE();
 	TIME_SAMPLE_SET_DRAW_LOCATION(TIME_MEASUREMENTS_TOP_RIGHT);
 
-	OFX_REMOTEUI_SERVER_SETUP(); 	//start server
-	OFX_REMOTEUI_SERVER_SET_UPCOMING_PARAM_GROUP("DEBUG");
+	myTex = new ofTexture(); //create your own texture, it will be cleared so be sure its empty
 
-	myTex = new ofTexture();
-	progressiveTextureLoader.setup(myTex, CV_INTER_AREA);
-	TS_START_NIF("Total Load Time");
-	progressiveTextureLoader.loadTexture("crap8192.jpg", true /*create mipmaps*/);
+	//setup the loader by giving it a texture to load into, and a resizing quality
+	//CV_INTER_LINEAR, CV_INTER_NN, CV_INTER_CUBIC, CV_INTER_AREA
+	progressiveTextureLoader.setup(myTex, CV_INTER_CUBIC);
+
+	//add a listener to get notified when tex is fully loaded
+	//and one to let you know when the texture is drawable
 	ofAddListener(progressiveTextureLoader.textureReady, this, &testApp::textureReady);
+	ofAddListener(progressiveTextureLoader.textureDrawable, this, &testApp::textureDrawable);
 
-	OFX_REMOTEUI_SERVER_LOAD_FROM_XML();
+	//start loading the texture!
+	TIME_SAMPLE_START_NOIF("Total Load Time");
 
-	plot = new ofxHistoryPlot( NULL, "frameTime", 400, false);
+	progressiveTextureLoader.loadTexture(imgName, true /*create mipmaps*/);
+
+	plot = new ofxHistoryPlot( NULL, "frameTime", ofGetWidth(), false);
 	plot->setRange(0, 16.66f * 2.0f);
 	//plot->setLowerRange(0);
 	plot->addHorizontalGuide(16.66f, ofColor(0,255,0));
@@ -40,16 +51,24 @@ void testApp::setup(){
 
 
 void testApp::update(){
-	progressiveTextureLoader.update();
 	if(progressiveTextureLoader.isBusy()){
-		plot->update(TIME_SAMPLE_GET_LAST_DURATION("update()"));
+		plot->update(progressiveTextureLoader.getTimeSpentLastFrame());
 	}
+
 }
 
+void testApp::textureDrawable(ofxProgressiveTextureLoad::textureEvent& arg){
+	ofLogNotice() << "texture Drawable!";
+	textureReadyToDraw = true;
+}
 
 void testApp::textureReady(ofxProgressiveTextureLoad::textureEvent& arg){
-	cout << "textureReady!" << endl;
-	TS_STOP_NIF("Total Load Time");
+	if (arg.loaded){
+		ofLogNotice() << "textureReady!";
+		TIME_SAMPLE_STOP_NOIF("Total Load Time");
+	}else{
+		ofLogError() << "texture load failed!" << arg.texturePath;
+	}
 }
 
 
@@ -58,12 +77,16 @@ void testApp::draw(){
 	//texture
 	ofSetColor(255);
 
-	progressiveTextureLoader.draw(20, 50);
+
+	//progressiveTextureLoader.draw(20, 50); //debug
+	if(textureReadyToDraw){
+		myTex->draw(0,0, ofGetWidth(), ofGetHeight());
+	}
 
 	//clock
-	float s = 200;
+	float s = 50;
 	ofPushMatrix();
-	ofTranslate(ofGetWidth()/2, ofGetHeight()/2);
+	ofTranslate(ofGetWidth()/2, 70);
 	ofSetColor(0);
 	ofCircle(0, 0, s);
 	ofRotate(ofGetFrameNum() * 3.0, 0, 0, 1);
@@ -78,13 +101,11 @@ void testApp::draw(){
 
 
 void testApp::keyPressed(int key){
-
-	if(key==' '){
-		if(!progressiveTextureLoader.isBusy()){
-			myTex->clear();
-			TS_START_NIF("Total Load Time");
-			progressiveTextureLoader.loadTexture("crap8192.jpg", true /*create mipmaps*/);
-		}
+	if(key == ' ' && !progressiveTextureLoader.isBusy()){
+		TIME_SAMPLE_START_NOIF("Total Load Time");
+		myTex->clear();
+		textureReadyToDraw = false;
+		progressiveTextureLoader.loadTexture(imgName, true /*create mipmaps*/);
 	}
 }
 
