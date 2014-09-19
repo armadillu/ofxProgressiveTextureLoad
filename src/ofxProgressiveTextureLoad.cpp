@@ -305,7 +305,7 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 
 	ofSetPixelStorei(pix->getWidth(), 1, ofGetNumChannelsFromGLFormat(glFormat));
 
-	while (currentTime < maxTimeTakenPerFrame * 1000.0f && loadedScanLinesSoFar < pix->getHeight() && loops == 0) {
+	while (currentTime < maxTimeTakenPerFrame * 1000.0f && loadedScanLinesSoFar < pix->getHeight()) {
 
 		unsigned char * data = pix->getPixels() + numC * (int)pix->getWidth() * loadedScanLinesSoFar;
 
