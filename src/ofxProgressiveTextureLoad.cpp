@@ -53,7 +53,6 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 				originalImage.setUseTexture(false);
 				originalImage.loadImage(imagePath);
 				//originalImage.setImageType(OF_IMAGE_COLOR_ALPHA); //testing rgba maybe faster upload?
-
 				TS_STOP("loadPix");
 				setState(RESIZING_FOR_MIPMAPS);
 				break;
@@ -278,7 +277,7 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 						0,								//x offset
 						loadedScanLinesSoFar,			//y offset
 						pix->getWidth(),				//width
-						numLinesToLoadThisLoop,						//height >> numLinesPerLoop line per iteration
+						numLinesToLoadThisLoop,			//height >> numLinesPerLoop line per iteration
 						glFormat,						//format
 						glPixelType,					//type
 						data							//pixels

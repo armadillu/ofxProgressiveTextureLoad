@@ -5,6 +5,8 @@ void testApp::setup(){
 
 	ofBackground(22);
 	ofEnableAlphaBlending();
+	ofSetVerticalSync(true);
+	ofSetFrameRate(60);
 	ofDisableArbTex(); //POW2 textueres, GL_TEXTURE_2D!
 	//ofEnableArbTex();
 
@@ -76,6 +78,14 @@ void testApp::draw(){
 
 
 void testApp::keyPressed(int key){
+
+	if(key==' '){
+		if(!progressiveTextureLoader.isBusy()){
+			myTex->clear();
+			TS_START_NIF("Total Load Time");
+			progressiveTextureLoader.loadTexture("crap8192.jpg", true /*create mipmaps*/);
+		}
+	}
 }
 
 
