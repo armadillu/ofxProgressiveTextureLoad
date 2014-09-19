@@ -1,6 +1,8 @@
 #include "testApp.h"
 #include "ofxGLError.h"
 
+#include "ofxTimeMeasurements.h"
+
 void testApp::setup(){
 
 	ofBackground(22);
@@ -12,16 +14,14 @@ void testApp::setup(){
 	TIME_SAMPLE_DISABLE_AVERAGE();
 	TIME_SAMPLE_SET_DRAW_LOCATION(TIME_MEASUREMENTS_TOP_RIGHT);
 
-	OFX_REMOTEUI_SERVER_SETUP(); 	//start server
-	OFX_REMOTEUI_SERVER_SET_UPCOMING_PARAM_GROUP("DEBUG");
-
 	myTex = new ofTexture();
 	progressiveTextureLoader.setup(myTex, CV_INTER_AREA);
-	TS_START_NIF("Total Load Time");
-	progressiveTextureLoader.loadTexture("crap8192.jpg", true /*create mipmaps*/);
 	ofAddListener(progressiveTextureLoader.textureReady, this, &testApp::textureReady);
 
-	OFX_REMOTEUI_SERVER_LOAD_FROM_XML();
+	//start loading the texture!
+	TIME_SAMPLE_START_NOIF("Total Load Time");
+
+	progressiveTextureLoader.loadTexture("8192px.jpg", true /*create mipmaps*/);
 
 	plot = new ofxHistoryPlot( NULL, "frameTime", 400, false);
 	plot->setRange(0, 16.66f * 2.0f);
@@ -39,14 +39,18 @@ void testApp::setup(){
 
 void testApp::update(){
 	if(progressiveTextureLoader.isBusy()){
-		plot->update(TIME_SAMPLE_GET_LAST_DURATION("update()"));
+		plot->update(progressiveTextureLoader.getTimeSpentLastFrame());
 	}
 }
 
 
 void testApp::textureReady(ofxProgressiveTextureLoad::textureEvent& arg){
-	cout << "textureReady!" << endl;
-	TS_STOP_NIF("Total Load Time");
+	if (arg.loaded){
+		ofLogNotice() << "textureReady!";
+		TIME_SAMPLE_STOP_NOIF("Total Load Time");
+	}else{
+		ofLogError() << "texture load failed!" << arg.texturePath;
+	}
 }
 
 
@@ -75,6 +79,11 @@ void testApp::draw(){
 
 
 void testApp::keyPressed(int key){
+	if(key == ' ' && !progressiveTextureLoader.isBusy()){
+		TIME_SAMPLE_START_NOIF("Total Load Time");
+		myTex->clear();
+		progressiveTextureLoader.loadTexture("8192px.jpg", true /*create mipmaps*/);
+	}
 }
 
 

@@ -1,10 +1,10 @@
 #pragma once
 
 #include "ofMain.h"
-#include "ofxTimeMeasurements.h"
 #include "ofxHistoryPlot.h"
-#include "ofxRemoteUIServer.h"
 #include "ofxProgressiveTextureLoad.h"
+
+//just in case we overrode it in ofxProgressiveTextureLoad.h by disabling measurements
 
 #include "ofxMSATimer.h"
 

@@ -7,8 +7,6 @@
 //
 
 #include "ofxProgressiveTextureLoad.h"
-#include "ofxTimeMeasurements.h"
-#include "ofxRemoteUIServer.h"
 #include <math.h>
 
 ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
@@ -16,6 +14,8 @@ ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 	numLinesPerLoop = 16;
 	maxTimeTakenPerFrame = 0.5; //ms
 	state = IDLE;
+	verbose = false;
+	lastFrameTime = 0.0f;
 	texture = NULL;
 }
 
@@ -23,15 +23,12 @@ void ofxProgressiveTextureLoad::setup(ofTexture* tex, int resizeQuality_){
 
 	resizeQuality = resizeQuality_;
 	texture = tex;
-	RUI_SHARE_PARAM(numLinesPerLoop, 1, 256);
-	RUI_SHARE_PARAM(maxTimeTakenPerFrame, 0.1, 8); //ms
-	RUI_WATCH_PARAM(numLinesPerLoop);
-
 }
 
 void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 
 	if (state == IDLE){
+		startTime = ofGetElapsedTimef();
 		createMipMaps = withMipMaps;
 		pendingNotification = false;
 		loadedScanLinesSoFar = 0;
@@ -50,15 +47,20 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 	while(isThreadRunning()){
 
 		switch (state) {
-			case LOADING_PIXELS:
-				TS_START("loadPix");
+			case LOADING_PIXELS:{
+				TS_START_NIF("loadPix");
 				originalImage.setUseTexture(false);
-				originalImage.loadImage(imagePath);
-				//originalImage.setImageType(OF_IMAGE_COLOR_ALPHA); //testing rgba maybe faster upload?
-
-				TS_STOP("loadPix");
-				setState(RESIZING_FOR_MIPMAPS);
-				break;
+				bool ok = originalImage.loadImage(imagePath);
+				if (!ok){
+					setState(LOADING_FAILED);
+					ofLogError() << "ofxProgressiveTextureLoad: img loading failed! " << imagePath;
+					stopThread();
+				}else{
+					//originalImage.setImageType(OF_IMAGE_COLOR_ALPHA); //testing rgba maybe faster upload?
+					TS_STOP_NIF("loadPix");
+					setState(RESIZING_FOR_MIPMAPS);
+				}
+				}break;
 
 			case RESIZING_FOR_MIPMAPS:
 				resizeImageForMipMaps();
@@ -151,6 +153,10 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 
 	switch (state) {
 
+		case LOADING_FAILED:{
+			pendingNotification = true;
+		}break;
+
 		case ALLOC_TEXTURE:{
 			texture->clear();
 			ofPoint targetSize = getMipMap0ImageSize();
@@ -214,12 +220,20 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 	}
 
 	if(pendingNotification){
+
 		pendingNotification = false;
 		textureEvent ev;
+		if (state == LOADING_FAILED ){
+			ev.loaded = false;
+		}else{
+			ev.loaded = true;
+		}
 		ev.who = this;
 		ev.tex = texture;
+		ev.elapsedTime = ofGetElapsedTimef() - startTime;
 		ev.texturePath = imagePath;
 		ofNotifyEvent(textureReady, ev, this);
+		setState(IDLE);
 	}
 }
 
@@ -297,6 +311,8 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 	}
 
 	//cout << "mipmapLevel " << mipmapLevel << " spent " << currentTime / 1000.0f << " ms and loaded " << scanlinesLoadedThisFrame << " lines across "<< loops << " loops" << endl;
+
+	lastFrameTime = currentTime / 1000.0f; //in ms!
 
 	if (loadedScanLinesSoFar >= pix->getHeight()){ //done!
 		mipMapLevelLoaded = true;
