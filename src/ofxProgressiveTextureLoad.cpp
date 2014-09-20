@@ -13,6 +13,7 @@ ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 
 	numLinesPerLoop = 16;
 	maxTimeTakenPerFrame = 1.0; //ms
+	currentMipMapLevel = 0;
 	state = IDLE;
 	verbose = false;
 	lastFrameTime = 0.0f;
@@ -232,13 +233,12 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 					ev.elapsedTime = ofGetElapsedTimef() - startTime;
 					ev.texturePath = imagePath;
 					ofNotifyEvent(textureDrawable, ev, this);
-				}
-				if (mipmapsLoaded >= 4){
 					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+				}
+				if (mipmapsLoaded >= 4){
 					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_LOD_BIAS, texLodBias);
 				}
-				//glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, ofMap(ofGetMouseX(), 0, ofGetWidth(), -3, 3, true)); //shoot for sharper test
 				texture->unbind();
 
 				mipMapLevelLoaded = false;

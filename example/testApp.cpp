@@ -76,12 +76,11 @@ void testApp::draw(){
 
 	//texture
 	ofSetColor(255);
-
-
-	//progressiveTextureLoader.draw(20, 50); //debug
+	
 	if(textureReadyToDraw){
 		myTex->draw(0,0, ofGetWidth(), ofGetHeight());
 	}
+	//progressiveTextureLoader.draw(20, 50); //debug
 
 	//clock
 	float s = 50;
