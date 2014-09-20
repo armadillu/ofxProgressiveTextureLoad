@@ -13,9 +13,8 @@ See the example for more info.
 
 [demo video](http://youtu.be/aQISt4ruskA) 
 
-Introduction
-------------
-Describe what your addon is about
+Requires ofxOpenCV for image resizing, example uses ofxPlotHistory and ofxTimeMeasurements to track performance, but they are not necessary.
+
 
 License
 -------
