@@ -53,7 +53,7 @@ public:
 	void setVerbose(bool v){verbose = v;}
 	bool isBusy(){return state != IDLE;}
 
-	void draw(int, int); //for debug purposes!
+	void draw(int, int, bool debugImages = false); //for debug purposes!
 
 	struct textureEvent{
 		bool							loaded;

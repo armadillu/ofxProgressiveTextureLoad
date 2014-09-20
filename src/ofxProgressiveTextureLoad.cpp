@@ -141,7 +141,7 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 ofPoint ofxProgressiveTextureLoad::getMipMap0ImageSize(){
 	int newW;
 	int newH;
-	if (createMipMaps || (!createMipMaps && texture->getTextureData().textureTarget != GL_TEXTURE_RECTANGLE_ARB) ){
+	if (createMipMaps || (!createMipMaps && !ofGetUsingArbTex()) ){
 		newW = ofNextPow2(originalImage.width);
 		newH = ofNextPow2(originalImage.height);
 	}else{
@@ -363,9 +363,9 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 }
 
 
-void ofxProgressiveTextureLoad::draw(int x, int y){
+void ofxProgressiveTextureLoad::draw(int x, int y, bool debugImages){
 
-	if(texture){
+	if(texture && debugImages){
 		if(isReadyToDrawWhileLoading() || state == IDLE ){
 			ofSetColor(255);
 			float ar = texture->getWidth() / float(texture->getHeight());
@@ -373,10 +373,10 @@ void ofxProgressiveTextureLoad::draw(int x, int y){
 			float yy = (texture->getHeight() - ofGetHeight()) * (ofGetMouseY() / float(ofGetHeight()));
 			texture->draw(-xx, -yy);
 			texture->draw(0,
-						  0,
-						  ofClamp(ofGetMouseX(), 10, 300),
-						  ofClamp(ofGetMouseY(), 10, 300 / ar)
-						  );
+				0,
+				ofClamp(ofGetMouseX(), 10, 300),
+				ofClamp(ofGetMouseY(), 10, 300 / ar)
+				);
 		}
 	}
 

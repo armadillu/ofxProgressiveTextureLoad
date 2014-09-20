@@ -26,6 +26,10 @@ void testApp::setup(){
 	//CV_INTER_LINEAR, CV_INTER_NN, CV_INTER_CUBIC, CV_INTER_AREA
 	progressiveTextureLoader.setup(myTex, CV_INTER_CUBIC);
 
+	//these 2 settings control how long it takes for the tex to load
+	progressiveTextureLoader.setScanlinesPerLoop(1);//see header for explanation
+	progressiveTextureLoader.setTargetTimePerFrame(1.0f); //how long to spend uploading data per frame, in ms
+
 	//add a listener to get notified when tex is fully loaded
 	//and one to let you know when the texture is drawable
 	ofAddListener(progressiveTextureLoader.textureReady, this, &testApp::textureReady);
@@ -33,11 +37,10 @@ void testApp::setup(){
 
 	//start loading the texture!
 	TIME_SAMPLE_START_NOIF("Total Load Time");
-
 	progressiveTextureLoader.loadTexture(imgName, true /*create mipmaps*/);
 
-	plot = new ofxHistoryPlot( NULL, "frameTime", ofGetWidth(), false);
-	plot->setRange(0, 16.66f * 2.0f);
+	plot = new ofxHistoryPlot( NULL, "frameTime", 400, false);
+	plot->setRange(0, 18.0f);
 	//plot->setLowerRange(0);
 	plot->addHorizontalGuide(16.66f, ofColor(0,255,0));
 	plot->setColor( ofColor(255,0,0) );
@@ -66,6 +69,7 @@ void testApp::textureReady(ofxProgressiveTextureLoad::textureEvent& arg){
 	if (arg.loaded){
 		ofLogNotice() << "textureReady!";
 		TIME_SAMPLE_STOP_NOIF("Total Load Time");
+		textureReadyToDraw = true;
 	}else{
 		ofLogError() << "texture load failed!" << arg.texturePath;
 	}
@@ -80,7 +84,7 @@ void testApp::draw(){
 	if(textureReadyToDraw){
 		myTex->draw(0,0, ofGetWidth(), ofGetHeight());
 	}
-	//progressiveTextureLoader.draw(20, 50); //debug
+	progressiveTextureLoader.draw(20, 50); //debug
 
 	//clock
 	float s = 50;
