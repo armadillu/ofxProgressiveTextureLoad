@@ -110,6 +110,7 @@ void testApp::keyPressed(int key){
 		textureReadyToDraw = false;
 		progressiveTextureLoader.loadTexture(imgName, true /*create mipmaps*/);
 	}
+	if(key=='c') myTex->clear();
 }
 
 
