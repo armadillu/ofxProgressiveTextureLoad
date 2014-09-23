@@ -14,7 +14,7 @@
 #include "ofxOpenCv.h"
 
 //define MEAURE_TIMINGS as FALSE to not measure timings with ofxTimeMeasurements
-#define MEAURE_TIMINGS TRUE
+#define MEAURE_TIMINGS FALSE
 
 #if(MEAURE_TIMINGS)
 	#include "ofxTimeMeasurements.h"
@@ -31,6 +31,7 @@ class ofxProgressiveTextureLoad: public ofThread{
 public:
 
 	ofxProgressiveTextureLoad();
+	~ofxProgressiveTextureLoad();
 
 	void setup(ofTexture* tex, int resizeQuality = CV_INTER_CUBIC);
 	void loadTexture(string path, bool withMipMaps);

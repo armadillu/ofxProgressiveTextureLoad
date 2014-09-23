@@ -21,6 +21,17 @@ ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 	texture = NULL;
 }
 
+ofxProgressiveTextureLoad::~ofxProgressiveTextureLoad(){
+	ofRemoveListener(ofEvents().update, this, &ofxProgressiveTextureLoad::update); //just in case
+	//delete all mipmap pixels
+	if(mipMapLevelPixels.size()){
+		for(int i = 0; i < mipMapLevelPixels.size(); i++){
+			delete mipMapLevelPixels[i];
+		}
+		mipMapLevelPixels.clear();
+	}
+}
+
 void ofxProgressiveTextureLoad::setup(ofTexture* tex, int resizeQuality_){
 
 	resizeQuality = resizeQuality_;
@@ -115,7 +126,7 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 
 				for(int currentMipMapLevel = 1 ; currentMipMapLevel < mipMapLevel; currentMipMapLevel++){
 
-					TS_START_NIF("resize mipmap " + ofToString(currentMipMapLevel));
+					//TS_START_NIF("resize mipmap " + ofToString(currentMipMapLevel));
 					int www = mipMap0.cols/2;
 					int hhh = mipMap0.rows/2;
 					if (www < 1) www = 1; if (hhh < 1) hhh = 1;
@@ -124,8 +135,8 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 					tmpPix = new ofPixels();
 					tmpPix->setFromPixels(mipMap0.data, mipMap0.cols, mipMap0.rows, numC/*RGB*/);
 					mipMapLevelPixels[currentMipMapLevel] = tmpPix;
-					ofLog() << "mipmaps for level " << currentMipMapLevel << " ready (" << tmpPix->getWidth() << ", " << tmpPix->getWidth()<< ")";
-					TS_STOP_NIF("resize mipmap " + ofToString(currentMipMapLevel));
+					//ofLog() << "mipmaps for level " << currentMipMapLevel << " ready (" << tmpPix->getWidth() << ", " << tmpPix->getWidth()<< ")";
+					//TS_STOP_NIF("resize mipmap " + ofToString(currentMipMapLevel));
 					//ofSaveImage(*tmpPix, "pix" + ofToString(currentMipMapLevel) + ".jpg" ); //debug!
 				}
 			}
@@ -199,19 +210,19 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 			if(createMipMaps){
 				currentMipMapLevel = mipMapLevelPixels.size() - 1; //start by loading the smallest image (deepest mipmap)
 				setState(LOADING_MIP_MAPS);
-				TS_START_NIF("upload mipmap " + ofToString(currentMipMapLevel));
+				//TS_START_NIF("upload mipmap " + ofToString(currentMipMapLevel));
 				
 			}else{
 				currentMipMapLevel = 0;
 				setState(LOADING_TEX);
 			}
-			TS_START_NIF("upload mipmap 0");
+			//TS_START_NIF("upload mipmap 0");
 			}break;
 
 		case LOADING_TEX:
 			progressiveTextureUpload(currentMipMapLevel);
 			if (mipMapLevelLoaded){
-				TS_STOP_NIF("upload mipmap 0");
+				//TS_STOP_NIF("upload mipmap 0");
 				texture->setTextureMinMagFilter(GL_LINEAR, GL_LINEAR);
 				wrapUp();
 			}
@@ -244,13 +255,13 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 				mipMapLevelLoaded = false;
 				mipMapLevelAllocPending = true;
 
-				TS_STOP_NIF("upload mipmap " + ofToString(currentMipMapLevel));
+				//TS_STOP_NIF("upload mipmap " + ofToString(currentMipMapLevel));
 
 				if (currentMipMapLevel == 0){ //all mipmaps loaded! done!
 					wrapUp();
 				}else{
 					currentMipMapLevel--;
-					TS_START_NIF("upload mipmap " + ofToString(currentMipMapLevel));
+					//TS_START_NIF("upload mipmap " + ofToString(currentMipMapLevel));
 				}
 			}else{
 				progressiveTextureUpload(currentMipMapLevel);
@@ -285,7 +296,7 @@ void ofxProgressiveTextureLoad::wrapUp(){
 	}
 	mipMapLevelPixels.clear();
 	pendingNotification = true;
-	setState(IDLE);
+	//setState(IDLE);
 }
 
 
@@ -315,7 +326,7 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 		}
 
 		if( mipMapLevelAllocPending){ //level 0 mipmap is already allocated!
-			TS_START_NIF("glTexImage2D mipmap " + ofToString(currentMipMapLevel));
+			//TS_START_NIF("glTexImage2D mipmap " + ofToString(currentMipMapLevel));
 			mipMapLevelAllocPending = false;
 			glTexImage2D(texture->texData.textureTarget,	//target
 						 mipmapLevel,						//mipmap level
@@ -327,7 +338,7 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 						 glPixelType,						//type
 						 0 );								//pixels
 
-			TS_STOP_NIF("glTexImage2D mipmap " + ofToString(currentMipMapLevel));
+			//TS_STOP_NIF("glTexImage2D mipmap " + ofToString(currentMipMapLevel));
 		}
 
 		glTexSubImage2D(texture->texData.textureTarget,	//target
