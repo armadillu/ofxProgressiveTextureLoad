@@ -93,6 +93,8 @@ private:
 	// speed params
 	int 				numLinesPerLoop; //we can increase that to reduce overhead
 	float 				maxTimeTakenPerFrame; //ms to spend loading tex data on a single frame
+	float				texLodBias;
+
 	int 				loadedScanLinesSoFar;
 
 	bool 				verbose;
@@ -108,7 +110,7 @@ private:
 	int 				resizeQuality;
 	float 				startTime;
 	float				lastFrameTime;
-	float				texLodBias;
+
 
 	map<int, ofPixels*>	mipMapLevelPixels;
 
