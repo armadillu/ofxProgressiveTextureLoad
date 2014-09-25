@@ -133,6 +133,8 @@ private:
 
 	ofPoint getMipMap0ImageSize();
 
+	int					ID;
+	static int			numInstancesCreated;
 
 };
 

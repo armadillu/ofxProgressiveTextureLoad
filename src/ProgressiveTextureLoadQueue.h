@@ -40,11 +40,14 @@ public:
 	//0 is neutral; negative is lower mipmaps (sharper), positive is higher mipmaps (blurrier)
 	void setTexLodBias(float bias){texLodBias = bias;}
 
+	void setNumberSimultaneousLoads(int numThreads);
+
 private:
 
 	ProgressiveTextureLoadQueue(); //use instance()!
 
 	struct LoadRequest{
+		int ID;
 		string path;
 		bool withMipMaps;
 		ofxProgressiveTextureLoad * loader;
@@ -61,12 +64,14 @@ private:
 
 	vector<LoadRequest> 					pending;
 	vector<LoadRequest>						current;
+	int numSimlutaneousLoads;
 
 	// params //
 
 	int 				numLinesPerLoop; //we can increase that to reduce overhead
 	float 				maxTimeTakenPerFrame; //ms to spend loading tex data on a single frame
 	float				texLodBias;
+	int					ids;
 };
 
 #endif

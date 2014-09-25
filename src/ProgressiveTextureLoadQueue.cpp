@@ -27,6 +27,8 @@ ProgressiveTextureLoadQueue::ProgressiveTextureLoadQueue(){
 	numLinesPerLoop = 16;
 	maxTimeTakenPerFrame = 1.0; //ms
 	texLodBias = -0.5;
+	numSimlutaneousLoads = 2;
+	ids = 0;
 
 	ofAddListener(ofEvents().update, this, &ProgressiveTextureLoadQueue::update);
 }
@@ -39,11 +41,13 @@ ofxProgressiveTextureLoad* ProgressiveTextureLoadQueue::loadTexture(string path,
 	r.path = path;
 	r.withMipMaps = createMipMaps;
 	r.loader = new ofxProgressiveTextureLoad();
-	r.loader->setVerbose(true);
+	r.loader->setVerbose(false);
 	r.loader->setScanlinesPerLoop(numLinesPerLoop);
 	r.loader->setTargetTimePerFrame(maxTimeTakenPerFrame);
 	r.loader->setTexLodBias(texLodBias);
 	r.loader->setup(tex, resizeQuality);
+	r.ID = ids;
+	ids++;
 
 	if(highPriority)
 		pending.insert(pending.begin(), r);
@@ -53,24 +57,42 @@ ofxProgressiveTextureLoad* ProgressiveTextureLoadQueue::loadTexture(string path,
 	return r.loader;
 }
 
+void ProgressiveTextureLoadQueue::setNumberSimultaneousLoads(int numThreads){
+	numSimlutaneousLoads = numThreads;
+}
 
 void ProgressiveTextureLoadQueue::update(ofEventArgs & args){
 
-	if (current.size()){
-		if(!current[0].loader->isBusy()){ //must have finished loading! time to start next one!
-			delete current[0].loader;
-			current.clear();
-		}
-	}
-	if(current.size() == 0){ //not doing anything, is there stuff to do?
-		if(pending.size()){
-			current.push_back(pending[0]);
-			pending.erase(pending.begin());
-			current[0].loader->loadTexture(current[0].path, current[0].withMipMaps);
+	vector<int> toDelete;
+
+	//see who is finished
+	for(int i = 0; i < current.size(); i++){
+		if(!current[i].loader->isBusy()){ //must have finished loading! time to start next one!
+			toDelete.push_back(i);
 		}
 	}
 
+	//dealloc and remove from current all the finished ones
+	for(int i = toDelete.size()-1; i >= 0 ; i--){
+		delete current[toDelete[i]].loader;
+		ofLogNotice() << "delete loader " << current[toDelete[i]].ID;
+		current.erase(current.begin() + toDelete[i]);
+	}
+
+	while(current.size() < numSimlutaneousLoads){ //is there stuff to do?
+		if(pending.size()){
+			current.push_back(pending[0]);
+			pending.erase(pending.begin());
+			int indx = current.size()-1;
+			current[indx].loader->loadTexture(current[indx].path, current[indx].withMipMaps);
+			ofLogNotice() << "load texture " << current[indx].ID;
+		}else{
+			break;
+		}
+	}
 }
+
+
 void ProgressiveTextureLoadQueue::draw(int x, int y){
 
 	ofDrawBitmapStringHighlight("ProgressiveTextureLoadQueue\nbusy: " + string(current.size() ? "YES" : "NO" )+
