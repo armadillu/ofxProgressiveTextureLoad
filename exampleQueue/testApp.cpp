@@ -21,8 +21,9 @@ void testApp::setup(){
 	ProgressiveTextureLoadQueue * q = ProgressiveTextureLoadQueue::instance();
 
 	q->setTexLodBias(-0.5);
-	q->setScanlinesPerLoop(320);
-	q->setTargetTimePerFrame(10.0);
+	q->setScanlinesPerLoop(256);
+	q->setTargetTimePerFrame(1.0);
+	q->setNumberSimultaneousLoads(5);
 
 	for(int i = 0; i < 10; i++){
 		ofTexture* t = new ofTexture(); //create your own texture, it will be cleared so be sure its empty
