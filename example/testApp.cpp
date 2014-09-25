@@ -25,10 +25,11 @@ void testApp::setup(){
 	//setup the loader by giving it a texture to load into, and a resizing quality
 	//CV_INTER_LINEAR, CV_INTER_NN, CV_INTER_CUBIC, CV_INTER_AREA
 	progressiveTextureLoader.setup(myTex, CV_INTER_CUBIC);
+	progressiveTextureLoader.setVerbose(true);
 
 	//these 2 settings control how long it takes for the tex to load
-	progressiveTextureLoader.setScanlinesPerLoop(1);//see header for explanation
-	progressiveTextureLoader.setTargetTimePerFrame(5.0f); //how long to spend uploading data per frame, in ms
+	progressiveTextureLoader.setScanlinesPerLoop(512);//see header for explanation
+	progressiveTextureLoader.setTargetTimePerFrame(10.0f); //how long to spend uploading data per frame, in ms
 
 	//add a listener to get notified when tex is fully loaded
 	//and one to let you know when the texture is drawable
