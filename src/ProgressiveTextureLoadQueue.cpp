@@ -75,19 +75,19 @@ void ProgressiveTextureLoadQueue::update(ofEventArgs & args){
 	//dealloc and remove from current all the finished ones
 	for(int i = toDelete.size()-1; i >= 0 ; i--){
 		delete current[toDelete[i]].loader;
-		ofLogNotice() << "delete loader " << current[toDelete[i]].ID;
+		//ofLogNotice() << "delete loader " << current[toDelete[i]].ID;
 		current.erase(current.begin() + toDelete[i]);
 	}
 
-	while(current.size() < numSimlutaneousLoads){ //is there stuff to do?
+	//is there stuff to do?
+	//stagger a bit jobs across frames too with %3
+	if(current.size() < numSimlutaneousLoads && (ofGetFrameNum()%3 == 1)){
 		if(pending.size()){
 			current.push_back(pending[0]);
 			pending.erase(pending.begin());
 			int indx = current.size()-1;
 			current[indx].loader->loadTexture(current[indx].path, current[indx].withMipMaps);
-			ofLogNotice() << "load texture " << current[indx].ID;
-		}else{
-			break;
+			//ofLogNotice() << "load texture " << current[indx].ID;
 		}
 	}
 }

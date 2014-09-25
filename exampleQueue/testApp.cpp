@@ -23,7 +23,7 @@ void testApp::setup(){
 	q->setTexLodBias(-0.5);
 	q->setScanlinesPerLoop(256);
 	q->setTargetTimePerFrame(1.0);
-	q->setNumberSimultaneousLoads(5);
+	q->setNumberSimultaneousLoads(3);
 
 	for(int i = 0; i < 10; i++){
 		ofTexture* t = new ofTexture(); //create your own texture, it will be cleared so be sure its empty
@@ -69,10 +69,13 @@ void testApp::draw(){
 	int x = 0;
 	for(int i = 0; i < textures.size(); i++){
 		if(ready[textures[i]]){
-			float w = textures[i]->getWidth() * 0.05;
-			float h = textures[i]->getHeight() * 0.05;
-			textures[i]->draw(x, 0, w, h);
-			x += w;
+			float targetW = 200;
+			float w = textures[i]->getWidth();
+			float h = textures[i]->getHeight();
+			float s = targetW / w;
+
+			textures[i]->draw(x, 0, w * s, h * s);
+			x += w * s;
 			ofDrawBitmapString(ofToString(i), x + 10, 22);
 		}
 	}
