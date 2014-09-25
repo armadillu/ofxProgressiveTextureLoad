@@ -85,8 +85,16 @@ private:
 				LOADING_MIP_MAPS
 			};
 
+	struct dataTypeConfig{
+		GLuint glFormat;
+		int numBytesPerPix;
+		int opencvFormat;
+	};
+
+
 	State 				state;
 	ofImage 			originalImage;
+	dataTypeConfig		config;
 	ofTexture			*texture;
 
 	ofxMSATimer			timer;
@@ -124,6 +132,7 @@ private:
 	void setState(State newState){state = newState;}
 
 	ofPoint getMipMap0ImageSize();
+
 
 };
 

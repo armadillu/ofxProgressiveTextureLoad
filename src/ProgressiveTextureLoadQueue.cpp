@@ -39,7 +39,7 @@ ofxProgressiveTextureLoad* ProgressiveTextureLoadQueue::loadTexture(string path,
 	r.path = path;
 	r.withMipMaps = createMipMaps;
 	r.loader = new ofxProgressiveTextureLoad();
-	r.loader->setVerbose(true);
+	r.loader->setVerbose(false);
 	r.loader->setScanlinesPerLoop(numLinesPerLoop);
 	r.loader->setTargetTimePerFrame(maxTimeTakenPerFrame);
 	r.loader->setTexLodBias(texLodBias);

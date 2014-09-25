@@ -70,8 +70,27 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 					ofLogError() << "ofxProgressiveTextureLoad: img loading failed! " << imagePath;
 					stopThread();
 				}else{
-					//originalImage.setImageType(OF_IMAGE_COLOR_ALPHA); //testing rgba maybe faster upload?
 					TS_STOP_NIF("loadPix");
+//					if(originalImage.getPixelsRef().getImageType() == OF_IMAGE_GRAYSCALE){
+//						originalImage.setImageType(OF_IMAGE_COLOR); //mmm convert grayscale images to rgb for now
+//					}
+					switch (originalImage.getPixelsRef().getImageType()) {
+						case OF_IMAGE_COLOR:
+							config.glFormat = GL_RGB;
+							config.numBytesPerPix = 3;
+							config.opencvFormat = CV_8UC3;
+							break;
+						case OF_IMAGE_COLOR_ALPHA:
+							config.glFormat = GL_RGBA;
+							config.numBytesPerPix = 4;
+							config.opencvFormat = CV_8UC4;
+							break;
+						case OF_IMAGE_GRAYSCALE:
+							config.glFormat = GL_LUMINANCE;
+							config.numBytesPerPix = 1;
+							config.opencvFormat = CV_8UC1;
+							break;
+					}
 					setState(RESIZING_FOR_MIPMAPS);
 				}
 				}break;
@@ -93,7 +112,7 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 
 		case OF_IMAGE_COLOR:{ //todo rgba!
 
-			int numC = 3;
+			int numC = config.numBytesPerPix;
 			ofPoint targetSize = getMipMap0ImageSize();
 			int newW = targetSize.x;
 			int newH = targetSize.y;
@@ -101,7 +120,7 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 
 			TS_START_NIF("resize mipmap 0");
 			//fill in an opencv image
-			cv::Mat mipMap0(originalImage.height, originalImage.width, (numC == 3 ? CV_8UC3 : CV_8UC4));
+			cv::Mat mipMap0(originalImage.height, originalImage.width, config.opencvFormat);
 //			int wstep = mipMap0.step1(0);
 //			if( mipMap0.cols * mipMap0.channels() == wstep ){
 				memcpy( mipMap0.data,  originalImage.getPixels(), originalImage.width * originalImage.height * numC);
@@ -117,7 +136,7 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 			}
 
 			ofPixels *pix = new ofPixels();
-			pix->setFromPixels(mipMap0.data, newW, newH, numC/*RGB*/);
+			pix->setFromPixels(mipMap0.data, newW, newH, numC);
 			mipMapLevelPixels[0] = pix;
 			TS_STOP_NIF("resize mipmap 0");
 			//ofSaveImage(*pix, "pix" + ofToString(0) + ".jpg" ); //debug!
@@ -133,7 +152,7 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 					cv::resize(mipMap0, mipMap0, cv::Size(www, hhh), 0, 0, resizeQuality);
 					ofPixels * tmpPix;
 					tmpPix = new ofPixels();
-					tmpPix->setFromPixels(mipMap0.data, mipMap0.cols, mipMap0.rows, numC/*RGB*/);
+					tmpPix->setFromPixels(mipMap0.data, mipMap0.cols, mipMap0.rows, numC);
 					mipMapLevelPixels[currentMipMapLevel] = tmpPix;
 					//ofLog() << "mipmaps for level " << currentMipMapLevel << " ready (" << tmpPix->getWidth() << ", " << tmpPix->getWidth()<< ")";
 					//TS_STOP_NIF("resize mipmap " + ofToString(currentMipMapLevel));
@@ -302,7 +321,7 @@ void ofxProgressiveTextureLoad::wrapUp(){
 
 void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 
-	GLuint glFormat = GL_RGB;
+	GLuint glFormat = config.glFormat;
 	GLuint glPixelType = GL_UNSIGNED_BYTE;
 
 	texture->bind();
