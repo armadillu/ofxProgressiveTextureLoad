@@ -32,7 +32,7 @@ void testApp::setup(){
 		ofxProgressiveTextureLoad * loader = q->loadTexture(imgName,
 															t,
 															true/*MIP-MAPS!*/,
-															CV_INTER_NN);
+															CV_INTER_AREA);
 		ofAddListener(loader->textureReady, this, &testApp::textureReady);
 		ofAddListener(loader->textureDrawable, this, &testApp::textureDrawable);
 	}
@@ -63,6 +63,7 @@ void testApp::draw(){
 
 	//texture
 	ofSetColor(255);
+	textures[0]->draw(0, 0, ofGetWidth(), ofGetHeight());
 
 	int x = 0;
 	for(int i = 0; i < textures.size(); i++){
