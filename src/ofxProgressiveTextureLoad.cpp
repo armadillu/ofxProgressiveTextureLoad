@@ -108,63 +108,53 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 
 
-	switch (originalImage.getPixelsRef().getImageType()) {
+		int numC = config.numBytesPerPix;
+		ofPoint targetSize = getMipMap0ImageSize();
+		int newW = targetSize.x;
+		int newH = targetSize.y;
+		int mipMapLevel = floor(log( MAX(newW, newH) ) / log( 2 )) + 1; //THIS IS KEY! you need to do all mipmap levels or it will draw blank tex!
 
-		case OF_IMAGE_COLOR:{ //todo rgba!
-
-			int numC = config.numBytesPerPix;
-			ofPoint targetSize = getMipMap0ImageSize();
-			int newW = targetSize.x;
-			int newH = targetSize.y;
-			int mipMapLevel = floor(log( MAX(newW, newH) ) / log( 2 )) + 1; //THIS IS KEY! you need to do all mipmap levels or it will draw blank tex!
-
-			TS_START_NIF("resize mipmap 0");
-			//fill in an opencv image
-			cv::Mat mipMap0(originalImage.height, originalImage.width, config.opencvFormat);
-//			int wstep = mipMap0.step1(0);
-//			if( mipMap0.cols * mipMap0.channels() == wstep ){
-				memcpy( mipMap0.data,  originalImage.getPixels(), originalImage.width * originalImage.height * numC);
-//			}else{
-//				for( int i=0; i < originalImage.height; i++ ) {
-//					memcpy( mipMap0.data + (i * wstep), originalImage.getPixels() + (i * originalImage.width * numC), originalImage.width * numC );
-//				}
+		TS_START_NIF("resize mipmap 0");
+		//fill in an opencv image
+		cv::Mat mipMap0(originalImage.height, originalImage.width, config.opencvFormat);
+//		int wstep = mipMap0.step1(0);
+//		if( mipMap0.cols * mipMap0.channels() == wstep ){
+		memcpy( mipMap0.data,  originalImage.getPixels(), originalImage.width * originalImage.height * numC);
+//		}else{
+//			for( int i=0; i < originalImage.height; i++ ) {
+//				memcpy( mipMap0.data + (i * wstep), originalImage.getPixels() + (i * originalImage.width * numC), originalImage.width * numC );
 //			}
+//		}
 
-			if (createMipMaps || (!createMipMaps && ofGetUsingArbTex() == false) ){
-				//resize to next power of two
-				cv::resize(mipMap0, mipMap0, cv::Size(newW, newH), 0, 0, resizeQuality);
+		if (createMipMaps || (!createMipMaps && ofGetUsingArbTex() == false) ){
+			//resize to next power of two
+			cv::resize(mipMap0, mipMap0, cv::Size(newW, newH), 0, 0, resizeQuality);
+		}
+
+		ofPixels *pix = new ofPixels();
+		pix->setFromPixels(mipMap0.data, newW, newH, numC);
+		mipMapLevelPixels[0] = pix;
+		TS_STOP_NIF("resize mipmap 0");
+		//ofSaveImage(*pix, "pix" + ofToString(0) + ".jpg" ); //debug!
+
+		if(createMipMaps){
+
+			for(int currentMipMapLevel = 1 ; currentMipMapLevel < mipMapLevel; currentMipMapLevel++){
+
+				//TS_START_NIF("resize mipmap " + ofToString(currentMipMapLevel));
+				int www = mipMap0.cols/2;
+				int hhh = mipMap0.rows/2;
+				if (www < 1) www = 1; if (hhh < 1) hhh = 1;
+				cv::resize(mipMap0, mipMap0, cv::Size(www, hhh), 0, 0, resizeQuality);
+				ofPixels * tmpPix;
+				tmpPix = new ofPixels();
+				tmpPix->setFromPixels(mipMap0.data, mipMap0.cols, mipMap0.rows, numC);
+				mipMapLevelPixels[currentMipMapLevel] = tmpPix;
+				//ofLog() << "mipmaps for level " << currentMipMapLevel << " ready (" << tmpPix->getWidth() << ", " << tmpPix->getWidth()<< ")";
+				//TS_STOP_NIF("resize mipmap " + ofToString(currentMipMapLevel));
+				//ofSaveImage(*tmpPix, "pix" + ofToString(currentMipMapLevel) + ".jpg" ); //debug!
 			}
-
-			ofPixels *pix = new ofPixels();
-			pix->setFromPixels(mipMap0.data, newW, newH, numC);
-			mipMapLevelPixels[0] = pix;
-			TS_STOP_NIF("resize mipmap 0");
-			//ofSaveImage(*pix, "pix" + ofToString(0) + ".jpg" ); //debug!
-
-			if(createMipMaps){
-
-				for(int currentMipMapLevel = 1 ; currentMipMapLevel < mipMapLevel; currentMipMapLevel++){
-
-					//TS_START_NIF("resize mipmap " + ofToString(currentMipMapLevel));
-					int www = mipMap0.cols/2;
-					int hhh = mipMap0.rows/2;
-					if (www < 1) www = 1; if (hhh < 1) hhh = 1;
-					cv::resize(mipMap0, mipMap0, cv::Size(www, hhh), 0, 0, resizeQuality);
-					ofPixels * tmpPix;
-					tmpPix = new ofPixels();
-					tmpPix->setFromPixels(mipMap0.data, mipMap0.cols, mipMap0.rows, numC);
-					mipMapLevelPixels[currentMipMapLevel] = tmpPix;
-					//ofLog() << "mipmaps for level " << currentMipMapLevel << " ready (" << tmpPix->getWidth() << ", " << tmpPix->getWidth()<< ")";
-					//TS_STOP_NIF("resize mipmap " + ofToString(currentMipMapLevel));
-					//ofSaveImage(*tmpPix, "pix" + ofToString(currentMipMapLevel) + ".jpg" ); //debug!
-				}
-			}
-			}break;
-
-		default:
-			ofLogError() << "img type not supported! " << originalImage.getPixelsRef().getImageType();
-			break;
-	}
+		}
 }
 
 
