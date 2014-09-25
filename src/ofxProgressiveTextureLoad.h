@@ -14,7 +14,7 @@
 #include "ofxOpenCv.h"
 
 //define MEAURE_TIMINGS as FALSE to not measure timings with ofxTimeMeasurements
-#define MEAURE_TIMINGS TRUE
+#define MEAURE_TIMINGS FALSE
 
 #if(MEAURE_TIMINGS)
 	#include "ofxTimeMeasurements.h"
