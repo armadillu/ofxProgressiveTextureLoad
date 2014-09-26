@@ -30,6 +30,7 @@ class testApp : public ofBaseApp{
 		vector<ofTexture *> textures;
 		vector<ofxProgressiveTextureLoad*> loaders;
 		map<ofTexture *, bool> ready;
+		vector<string>	imageNames;
 
 	void threadedFunction();
 };

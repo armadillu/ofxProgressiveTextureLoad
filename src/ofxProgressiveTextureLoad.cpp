@@ -61,6 +61,7 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 
 void ofxProgressiveTextureLoad::threadedFunction(){
 
+	getPocoThread().setName("ofxProgressiveTextureLoad");
 	while(isThreadRunning()){
 
 		switch (state) {
@@ -75,9 +76,6 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 					stopThread();
 				}else{
 					TS_STOP_NIF("loadPix " + ofToString(ID));
-//					if(originalImage.getPixelsRef().getImageType() == OF_IMAGE_GRAYSCALE){
-//						originalImage.setImageType(OF_IMAGE_COLOR); //mmm convert grayscale images to rgb for now
-//					}
 					switch (originalImage.getPixelsRef().getImageType()) {
 						case OF_IMAGE_COLOR:
 							config.glFormat = GL_RGB;
