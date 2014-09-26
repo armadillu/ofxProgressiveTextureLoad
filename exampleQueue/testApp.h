@@ -27,10 +27,10 @@ class testApp : public ofBaseApp{
 		void textureReady(ofxProgressiveTextureLoad::textureEvent& arg);
 		void textureDrawable(ofxProgressiveTextureLoad::textureEvent& arg);
 
-		vector<ofTexture *> textures;
-		vector<ofxProgressiveTextureLoad*> loaders;
-		map<ofTexture *, bool> ready;
-		vector<string>	imageNames;
+		vector<ofTexture *>				textures;
+		vector<ofxProgressiveTextureLoad*>	loaders;
+		map<ofTexture *, bool>				ready;
+		vector<string>					imageNames;
 
 	void threadedFunction();
 };

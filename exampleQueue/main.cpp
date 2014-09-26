@@ -6,13 +6,13 @@
 
 //========================================================================
 int main( ){
-//	ofAppGLFWWindow win;
-//	win.setNumSamples(8);
+	ofAppGLFWWindow win;
+	win.setNumSamples(0);
 	//win.setOrientation(OF_ORIENTATION_90_LEFT);
 	//win.setMultiDisplayFullscreen(true);
 	//win.set
 
-	ofSetupOpenGL(1800,400, OF_WINDOW);	// <-------- setup the GL context
+	ofSetupOpenGL(&win, 1800,400, OF_WINDOW);	// <-------- setup the GL context
 
 	TIME_SAMPLE_SET_FRAMERATE(60);
 	TIME_SAMPLE_DISABLE_AVERAGE();

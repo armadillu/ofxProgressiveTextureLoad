@@ -21,6 +21,7 @@ void testApp::setup(){
 
 	TIME_SAMPLE_SET_FRAMERATE(60);
 	TIME_SAMPLE_DISABLE_AVERAGE();
+	TIME_SAMPLE_GET_INSTANCE()->setIdleTimeColorFadePercent(0.3);
 	TIME_SAMPLE_SET_REMOVE_EXPIRED_THREADS(false);
 	ofxTimeMeasurements::instance()->setDeadThreadTimeDecay(0.99);
 	TIME_SAMPLE_SET_DRAW_LOCATION(TIME_MEASUREMENTS_TOP_RIGHT);
@@ -44,7 +45,6 @@ void testApp::setup(){
 		ofAddListener(loader->textureReady, this, &testApp::textureReady);
 		ofAddListener(loader->textureDrawable, this, &testApp::textureDrawable);
 	}
-
 }
 
 
@@ -86,8 +86,8 @@ void testApp::draw(){
 			ofSetColor(255,0,0);
 			ofRect(r);
 			ofFill();
+			ofDrawBitmapString(ofToString(i), x + 30 , 52);
 			x += w * s;
-			ofDrawBitmapString(ofToString(i), x + 10, 22);
 		}
 	}
 
