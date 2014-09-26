@@ -40,7 +40,11 @@ public:
 	//0 is neutral; negative is lower mipmaps (sharper), positive is higher mipmaps (blurrier)
 	void setTexLodBias(float bias){texLodBias = bias;}
 
+	//how many textures to load at the same time!
 	void setNumberSimultaneousLoads(int numThreads);
+
+	//set debug print logging
+	void setVerbose(bool v){verbose = v;}
 
 private:
 
@@ -72,6 +76,7 @@ private:
 	float 				maxTimeTakenPerFrame; //ms to spend loading tex data on a single frame
 	float				texLodBias;
 	int					ids;
+	bool				verbose;
 };
 
 #endif

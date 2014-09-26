@@ -21,19 +21,20 @@ void testApp::setup(){
 	ProgressiveTextureLoadQueue * q = ProgressiveTextureLoadQueue::instance();
 
 	q->setTexLodBias(-0.5);
-	q->setScanlinesPerLoop(256);
-	q->setTargetTimePerFrame(1.0);
+	q->setScanlinesPerLoop(100);
+	q->setTargetTimePerFrame(2.0);
 	q->setNumberSimultaneousLoads(3);
+	q->setVerbose(true);
 
-	for(int i = 0; i < 10; i++){
+	for(int i = 0; i < 5; i++){
 		ofTexture* t = new ofTexture(); //create your own texture, it will be cleared so be sure its empty
 		textures.push_back(t);
 		ready[t] = false;
 
 		ofxProgressiveTextureLoad * loader = q->loadTexture(imgName,
 															t,
-															true/*MIP-MAPS!*/,
-															CV_INTER_AREA);
+															true,				/*MIP-MAPS!*/
+															CV_INTER_AREA);		/*Resize Quality*/
 		ofAddListener(loader->textureReady, this, &testApp::textureReady);
 		ofAddListener(loader->textureDrawable, this, &testApp::textureDrawable);
 	}

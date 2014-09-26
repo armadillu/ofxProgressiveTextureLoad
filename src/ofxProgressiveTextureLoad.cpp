@@ -222,8 +222,8 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 			if(createMipMaps){
 				currentMipMapLevel = mipMapLevelPixels.size() - 1; //start by loading the smallest image (deepest mipmap)
 				setState(LOADING_MIP_MAPS);
+				mipMapLevelAllocPending = true; //otherwise we dont alloc space for the 1st mipmap level, and we get GL_INVALID_OPERATION
 				TS_START_NIF("upload mipmaps " + ofToString(ID));
-				
 			}else{
 				currentMipMapLevel = 0;
 				setState(LOADING_TEX);
@@ -337,7 +337,7 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 			numLinesToLoadThisLoop = numLinesPerLoop;
 		}
 
-		if( mipMapLevelAllocPending){ //level 0 mipmap is already allocated!
+		if(mipMapLevelAllocPending){ //level 0 mipmap is already allocated!
 			//TS_START_NIF("glTexImage2D mipmap " + ofToString(currentMipMapLevel));
 			mipMapLevelAllocPending = false;
 			glTexImage2D(texture->texData.textureTarget,	//target
@@ -349,7 +349,6 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 						 glFormat,							//format
 						 glPixelType,						//type
 						 0 );								//pixels
-
 			//TS_STOP_NIF("glTexImage2D mipmap " + ofToString(currentMipMapLevel));
 		}
 

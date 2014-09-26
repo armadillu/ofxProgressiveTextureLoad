@@ -29,6 +29,7 @@ ProgressiveTextureLoadQueue::ProgressiveTextureLoadQueue(){
 	texLodBias = -0.5;
 	numSimlutaneousLoads = 2;
 	ids = 0;
+	verbose = false;
 
 	ofAddListener(ofEvents().update, this, &ProgressiveTextureLoadQueue::update);
 }
@@ -41,7 +42,7 @@ ofxProgressiveTextureLoad* ProgressiveTextureLoadQueue::loadTexture(string path,
 	r.path = path;
 	r.withMipMaps = createMipMaps;
 	r.loader = new ofxProgressiveTextureLoad();
-	r.loader->setVerbose(false);
+	r.loader->setVerbose(verbose);
 	r.loader->setScanlinesPerLoop(numLinesPerLoop);
 	r.loader->setTargetTimePerFrame(maxTimeTakenPerFrame);
 	r.loader->setTexLodBias(texLodBias);
