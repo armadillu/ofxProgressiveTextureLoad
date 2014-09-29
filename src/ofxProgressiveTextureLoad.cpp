@@ -229,52 +229,57 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 			//TS_START_NIF("upload mipmap 0");
 			}break;
 
-		case LOADING_TEX:
-			progressiveTextureUpload(currentMipMapLevel);
+		case LOADING_TEX:{
+			uint64_t currentTime = 0;
+			progressiveTextureUpload(currentMipMapLevel, currentTime);
 			if (mipMapLevelLoaded){
 				//TS_STOP_NIF("upload mipmap 0");
 				texture->setTextureMinMagFilter(GL_LINEAR, GL_LINEAR);
 				wrapUp();
 			}
-			break;
+			}break;
 
 		case LOADING_MIP_MAPS:{
 
 			bool wrappingUp = false;
-			if (mipMapLevelLoaded){
-				texture->bind();
-				glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_BASE_LEVEL, currentMipMapLevel);
-				glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAX_LEVEL, mipMapLevelPixels.size() - 2);
-				int mipmapsLoaded = mipMapLevelPixels.size() - currentMipMapLevel;
-				if (mipmapsLoaded == 2){ //notify the user that the texture is drawable right now, and will progressivelly draw
-					textureEvent ev;
-					ev.loaded = true;
-					ev.who = this;
-					ev.tex = texture;
-					ev.elapsedTime = ofGetElapsedTimef() - startTime;
-					ev.texturePath = imagePath;
-					ofNotifyEvent(textureDrawable, ev, this);
-					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-				}
-				if (mipmapsLoaded >= 4){
-					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_LOD_BIAS, texLodBias);
-				}
-				texture->unbind();
+			bool canGoOn = true;
+			uint64_t timeSpentSoFar = 0;
+			while(canGoOn && !wrappingUp){
+				if (mipMapLevelLoaded){
+					texture->bind();
+					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_BASE_LEVEL, currentMipMapLevel);
+					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAX_LEVEL, mipMapLevelPixels.size() - 2);
+					int mipmapsLoaded = mipMapLevelPixels.size() - currentMipMapLevel;
+					if (mipmapsLoaded == 3){ //notify the user that the texture is drawable right now, and will progressivelly draw
+						textureEvent ev;
+						ev.loaded = true;
+						ev.who = this;
+						ev.tex = texture;
+						ev.elapsedTime = ofGetElapsedTimef() - startTime;
+						ev.texturePath = imagePath;
+						ofNotifyEvent(textureDrawable, ev, this);
+						glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+						glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+					}
+					if (mipmapsLoaded >= 4){
+						glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_LOD_BIAS, texLodBias);
+					}
+					texture->unbind();
 
-				mipMapLevelLoaded = false;
-				mipMapLevelAllocPending = true;
+					mipMapLevelLoaded = false;
+					mipMapLevelAllocPending = true;
 
-				if (currentMipMapLevel == 0){ //all mipmaps loaded! done!
-					wrapUp();
-					wrappingUp = true;
-					TS_STOP_NIF("upload mipmaps " + ofToString(ID));
-				}else{
-					currentMipMapLevel--;
+					if (currentMipMapLevel == 0){ //all mipmaps loaded! done!
+						wrapUp();
+						wrappingUp = true;
+						TS_STOP_NIF("upload mipmaps " + ofToString(ID));
+					}else{
+						currentMipMapLevel--;
+					}
 				}
-			}
-			if(!wrappingUp){
-				progressiveTextureUpload(currentMipMapLevel);
+				if(!wrappingUp){
+					canGoOn = progressiveTextureUpload(currentMipMapLevel, timeSpentSoFar);
+				}
 			}
 			}break;
 	}
@@ -310,13 +315,12 @@ void ofxProgressiveTextureLoad::wrapUp(){
 }
 
 
-void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
+bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64_t & currentTime){
 
 	GLuint glFormat = config.glFormat;
 	GLuint glPixelType = GL_UNSIGNED_BYTE;
 
 	texture->bind();
-	uint64_t currentTime = 0;
 	int numC = ofGetNumChannelsFromGLFormat(glFormat);
 	timer.getMicrosSinceLastCall();
 
@@ -368,6 +372,11 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 		if(verbose) cout << "loop " << loops << " loaded " << numLinesToLoadThisLoop << " lines and took " << timeThisLoop / 1000.0f << " ms" << endl;
 		loops++;
 	}
+	//if we finshed this mipmap but there's time left, we could go on...
+	bool canGoOn = false;
+	if(currentTime < maxTimeTakenPerFrame * 1000.0f){
+		canGoOn = true;
+	}
 
 	if(verbose) cout << "mipmapLevel " << mipmapLevel << " spent " << currentTime / 1000.0f << " ms and loaded " << scanlinesLoadedThisFrame << " lines across "<< loops << " loops" << endl;
 
@@ -380,6 +389,7 @@ void ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel){
 
 	texture->unbind();
 	glDisable(texture->texData.textureTarget);
+	return canGoOn;
 }
 
 

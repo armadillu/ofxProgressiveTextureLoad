@@ -31,7 +31,7 @@ public:
 	//as scanlines, until we reach the target time per frame to be spent uploading texture data
 	//how many scanlines per loop will determine the granularity of the time accuracy. Less scanlines
 	//add more overhead, but should lead to more accurate stop times.
-	void setScanlinesPerLoop(int numLines){numLinesPerLoop = numLines;}
+	void setScanlinesPerLoop(int numLines);
 
 	//how much time do you want ofxProgressiveTextureLoad to spend uploading data to the gpu per frame
 	void setTargetTimePerFrame(float ms){maxTimeTakenPerFrame = ms;}

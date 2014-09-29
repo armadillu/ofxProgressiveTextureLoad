@@ -60,6 +60,12 @@ ofxProgressiveTextureLoad* ProgressiveTextureLoadQueue::loadTexture(string path,
 
 void ProgressiveTextureLoadQueue::setNumberSimultaneousLoads(int numThreads){
 	numSimlutaneousLoads = numThreads;
+	if(numSimlutaneousLoads < 1) numSimlutaneousLoads = 1; //safe dumb developers from themselves
+}
+
+void ProgressiveTextureLoadQueue::setScanlinesPerLoop(int numLines){
+	numLinesPerLoop = numLines;
+	if(numLinesPerLoop < 1) numLinesPerLoop = 1; //safe dumb developers from themselves
 }
 
 void ProgressiveTextureLoadQueue::update(ofEventArgs & args){

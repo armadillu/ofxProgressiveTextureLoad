@@ -6,11 +6,9 @@
 
 void testApp::setup(){
 
-
-	imageNames.push_back("huge.jpg");
-	imageNames.push_back("huge_bw.jpg");
-	imageNames.push_back("huge_a.png");
-
+	imageNames.push_back("huge_a.png"); //rgba , 4channels
+	imageNames.push_back("huge.jpg");	//rgb, 3 channels
+	imageNames.push_back("huge_bw.jpg");	//y,	1 channel
 
 	ofBackground(33);
 	ofEnableAlphaBlending();
@@ -29,8 +27,8 @@ void testApp::setup(){
 	ProgressiveTextureLoadQueue * q = ProgressiveTextureLoadQueue::instance();
 
 	q->setTexLodBias(-0.5);
-	q->setScanlinesPerLoop(100);
-	q->setTargetTimePerFrame(5.0);
+	q->setScanlinesPerLoop(10);
+	q->setTargetTimePerFrame(5);
 	q->setNumberSimultaneousLoads(1);
 	q->setVerbose(false);
 
