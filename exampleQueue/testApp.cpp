@@ -8,7 +8,7 @@ void testApp::setup(){
 
 	imageNames.push_back("huge_a.png"); //rgba , 4channels
 	imageNames.push_back("huge.jpg");	//rgb, 3 channels
-	imageNames.push_back("huge_bw.jpg");	//y,	1 channel
+	imageNames.push_back("huge_bw.jpg");//luminance, 1 channel
 
 	ofBackground(33);
 	ofEnableAlphaBlending();
@@ -26,18 +26,18 @@ void testApp::setup(){
 
 	ProgressiveTextureLoadQueue * q = ProgressiveTextureLoadQueue::instance();
 
-	q->setTexLodBias(-0.5);
-	q->setScanlinesPerLoop(10);
-	q->setTargetTimePerFrame(5);
+	q->setTexLodBias(-1.5);
+	q->setScanlinesPerLoop(32);
+	q->setTargetTimePerFrame(4.0);
 	q->setNumberSimultaneousLoads(1);
 	q->setVerbose(false);
 
 	for(int i = 0; i < 3; i++){
-		ofTexture* t = new ofTexture(); //create your own texture, it will be cleared so be sure its empty
+		ofTexture* t = new ofTexture(); //create your own texture to got data loaded into; it will be cleared!
 		textures.push_back(t);
 		ready[t] = false;
 		ofxProgressiveTextureLoad * loader = q->loadTexture(imageNames[i%imageNames.size()],
-															t,
+															t,					/*tex to load into*/
 															true,				/*MIP-MAPS!*/
 															CV_INTER_AREA);		/*Resize Quality*/
 		ofAddListener(loader->textureReady, this, &testApp::textureReady);
@@ -89,7 +89,7 @@ void testApp::draw(){
 		}
 	}
 
-	//main thread blocking - visual clock
+	//check for blocking main thread - visual clock
 	float s = 50;
 	ofPushMatrix();
 	ofTranslate(ofGetWidth()/2, 70);
@@ -100,9 +100,8 @@ void testApp::draw(){
 	ofRect(0, 0, s, 5);
 	ofPopMatrix();
 
+	//see if GL is happy
 	ofxGLError::draw(20,20);
-	float H = 200;
-
 }
 
 

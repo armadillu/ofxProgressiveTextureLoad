@@ -53,6 +53,7 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 		setState(LOADING_PIXELS);
 		startThread();
 		ofAddListener(ofEvents().update, this, &ofxProgressiveTextureLoad::update);
+		if(OFX_PROG_TEX_LOADER_MEAURE_TIMINGS) TS_START_NIF("total tex load time " + ofToString(ID));
 	}else{
 		ofLogError() << "cant load texture, busy!";
 	}
@@ -61,7 +62,7 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 
 void ofxProgressiveTextureLoad::threadedFunction(){
 
-	getPocoThread().setName("ofxProgressiveTextureLoad");
+	getPocoThread().setName("ofxProgressiveTextureLoad " + ofToString(ID));
 	while(isThreadRunning()){
 
 		switch (state) {
@@ -250,7 +251,7 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_BASE_LEVEL, currentMipMapLevel);
 					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAX_LEVEL, mipMapLevelPixels.size() - 2);
 					int mipmapsLoaded = mipMapLevelPixels.size() - currentMipMapLevel;
-					if (mipmapsLoaded == 3){ //notify the user that the texture is drawable right now, and will progressivelly draw
+					if (mipmapsLoaded == 2){ //notify the user that the texture is drawable right now, and will progressivelly draw
 						textureEvent ev;
 						ev.loaded = true;
 						ev.who = this;
@@ -299,6 +300,7 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 		ev.texturePath = imagePath;
 		ofNotifyEvent(textureReady, ev, this);
 		setState(IDLE);
+		if(OFX_PROG_TEX_LOADER_MEAURE_TIMINGS) TS_STOP_NIF("total tex load time " + ofToString(ID));
 	}
 }
 

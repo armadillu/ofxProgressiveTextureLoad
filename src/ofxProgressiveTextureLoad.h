@@ -13,10 +13,10 @@
 #include "ofxMSATimer.h"
 #include "ofxOpenCv.h"
 
-//define MEAURE_TIMINGS as FALSE to not measure timings with ofxTimeMeasurements
-#define MEAURE_TIMINGS TRUE
+//define OFX_PROG_TEX_LOADER_MEAURE_TIMINGS as FALSE to not measure timings with ofxTimeMeasurements
+#define OFX_PROG_TEX_LOADER_MEAURE_TIMINGS FALSE
 
-#if(MEAURE_TIMINGS)
+#if(OFX_PROG_TEX_LOADER_MEAURE_TIMINGS)
 	#include "ofxTimeMeasurements.h"
 #else
 	#undef TS_START_NIF

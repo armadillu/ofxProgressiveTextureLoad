@@ -34,7 +34,7 @@ public:
 	void setScanlinesPerLoop(int numLines);
 
 	//how much time do you want ofxProgressiveTextureLoad to spend uploading data to the gpu per frame
-	void setTargetTimePerFrame(float ms){maxTimeTakenPerFrame = ms;}
+	void setTargetTimePerFrame(float ms);
 
 	//in mipmap levels. used to tweak which mipmap to use; helps make mipmaps sharper or blurrier.
 	//0 is neutral; negative is lower mipmaps (sharper), positive is higher mipmaps (blurrier)
