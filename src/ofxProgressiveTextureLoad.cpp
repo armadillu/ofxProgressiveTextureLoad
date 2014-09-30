@@ -451,5 +451,16 @@ void ofxProgressiveTextureLoad::draw(int x, int y, bool debugImages){
 		default:
 			break;
 	}
+}
 
+string ofxProgressiveTextureLoad::getStateString(){
+	switch (state) {
+		case IDLE: return "IDLE";
+		case LOADING_PIXELS: return "LOADING_PIXELS";
+		case LOADING_FAILED: return "LOADING_FAILED";
+		case RESIZING_FOR_MIPMAPS: return "RESIZING_FOR_MIPMAPS";
+		case ALLOC_TEXTURE: return "ALLOC_TEXTURE";
+		case LOADING_TEX: return "LOADING_TEX";
+		case LOADING_MIP_MAPS: return "LOADING_MIP_MAPS";
+	}
 }

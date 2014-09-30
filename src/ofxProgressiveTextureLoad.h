@@ -53,6 +53,7 @@ public:
 	float getTimeSpentLastFrame(){ return lastFrameTime;} //in ms!
 	void setVerbose(bool v){verbose = v;}
 	bool isBusy(){return state != IDLE;}
+	string getStateString();
 
 	void draw(int, int, bool debugImages = false); //for debug purposes!
 

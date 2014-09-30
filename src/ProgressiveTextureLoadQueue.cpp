@@ -107,8 +107,11 @@ void ProgressiveTextureLoadQueue::update(ofEventArgs & args){
 
 void ProgressiveTextureLoadQueue::draw(int x, int y){
 
-	ofDrawBitmapStringHighlight("ProgressiveTextureLoadQueue\nbusy: " + string(current.size() ? "YES" : "NO" )+
-								"\npending: " + ofToString(pending.size()),
-								x, y);
+	string msg = "ProgressiveTextureLoadQueue\nbusy: " + string(current.size() ? "YES" : "NO" )+
+	"\npending: " + ofToString(pending.size());
+	for(int i = 0 ; i < current.size(); i++){
+		msg += "\n  Loader " + ofToString(i) + ": " + current[i].loader->getStateString();
+	}
+	ofDrawBitmapStringHighlight(msg, x, y);
 }
 
