@@ -55,6 +55,9 @@ public:
 	bool isBusy(){return state != IDLE;}
 	string getStateString();
 
+	void stopLoadingAsap(); //TODO! will get back to idle, tex remains as it is
+							//(caller is responisble to clear the tex)
+
 	void draw(int, int, bool debugImages = false); //for debug purposes!
 
 	struct textureEvent{

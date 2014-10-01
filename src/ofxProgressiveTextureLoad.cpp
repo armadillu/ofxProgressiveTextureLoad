@@ -434,9 +434,8 @@ void ofxProgressiveTextureLoad::draw(int x, int y, bool debugImages){
 
 		case LOADING_TEX:{
 			msg = "ofxProgressiveTextureLoad LOADING_TEX\n";
-			msg += "currentMipMap: " + ofToString(currentMipMapLevel);
 			float percent = 100.0f * loadedScanLinesSoFar / mipMapLevelPixels[0]->getHeight();
-			msg += "\nloaded: " + ofToString(percent,1) + "%";
+			msg += "loaded: " + ofToString(percent,1) + "%";
 			ofDrawBitmapString(msg, x, y);
 		}break;
 
@@ -453,14 +452,29 @@ void ofxProgressiveTextureLoad::draw(int x, int y, bool debugImages){
 	}
 }
 
+void ofxProgressiveTextureLoad::stopLoadingAsap(){
+	//TODO!
+}
+
 string ofxProgressiveTextureLoad::getStateString(){
+	string msg;
 	switch (state) {
 		case IDLE: return "IDLE";
 		case LOADING_PIXELS: return "LOADING_PIXELS";
 		case LOADING_FAILED: return "LOADING_FAILED";
 		case RESIZING_FOR_MIPMAPS: return "RESIZING_FOR_MIPMAPS";
 		case ALLOC_TEXTURE: return "ALLOC_TEXTURE";
-		case LOADING_TEX: return "LOADING_TEX";
-		case LOADING_MIP_MAPS: return "LOADING_MIP_MAPS";
+		case LOADING_TEX:{
+			msg += "LOADING_TEX (";
+			float percent = 100.0f * loadedScanLinesSoFar / mipMapLevelPixels[0]->getHeight();
+			msg += ofToString(percent,1) + "% loaded)";
+			return msg;
+		}
+		case LOADING_MIP_MAPS:{
+			msg += "LOADING_MIP_MAPS (currentMipMap: " + ofToString(currentMipMapLevel);
+			float percent = 100.0f * loadedScanLinesSoFar / mipMapLevelPixels[0]->getHeight();
+			msg += " " +ofToString(percent,1) + "% loaded)";
+			return msg;
+		}
 	}
 }
