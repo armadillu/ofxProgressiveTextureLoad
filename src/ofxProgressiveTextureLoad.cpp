@@ -203,6 +203,7 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 							  ofGetGlType(pix)
 							  );
 
+			notifiedReadyToDraw = false;
 			//setup OF texture sizes!
 			if(texture->texData.textureTarget == GL_TEXTURE_RECTANGLE_ARB){
 				texture->texData.tex_t = pix.getWidth();
@@ -249,9 +250,10 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 				if (mipMapLevelLoaded){
 					texture->bind();
 					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_BASE_LEVEL, currentMipMapLevel);
-					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAX_LEVEL, mipMapLevelPixels.size() - 2);
+					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAX_LEVEL, mipMapLevelPixels.size() - 1);
 					int mipmapsLoaded = mipMapLevelPixels.size() - currentMipMapLevel;
-					if (mipmapsLoaded == 2){ //notify the user that the texture is drawable right now, and will progressivelly draw
+					if (mipmapsLoaded >= 1 && !notifiedReadyToDraw){ //notify the user that the texture is drawable right now, and will progressively draw
+						notifiedReadyToDraw = true;
 						textureEvent ev;
 						ev.loaded = true;
 						ev.who = this;

@@ -124,6 +124,8 @@ private:
 	float 				startTime;
 	float				lastFrameTime;
 
+	bool				notifiedReadyToDraw;
+
 
 	map<int, ofPixels*>	mipMapLevelPixels;
 
