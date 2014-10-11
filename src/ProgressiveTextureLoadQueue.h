@@ -46,6 +46,8 @@ public:
 	//set debug print logging
 	void setVerbose(bool v){verbose = v;}
 
+	int getNumBusy();
+
 private:
 
 	ProgressiveTextureLoadQueue(); //use instance()!

@@ -197,7 +197,7 @@ bool ofxProgressiveTextureLoad::isReadyToDrawWhileLoading(){
 
 void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 
-	TS_START_ACC("ofxProgressiveTextureLoad u");
+	TS_START_ACC("ProgTexLoad u");
 	switch (state) {
 
 		case LOADING_FAILED:{
@@ -318,7 +318,7 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 		setState(IDLE);
 		if(OFX_PROG_TEX_LOADER_MEAURE_TIMINGS) TS_STOP_NIF("total tex load time " + ofToString(ID));
 	}
-	TS_STOP_ACC("ofxProgressiveTextureLoad u");
+	TS_STOP_ACC("ProgTexLoad u");
 }
 
 void ofxProgressiveTextureLoad::wrapUp(){

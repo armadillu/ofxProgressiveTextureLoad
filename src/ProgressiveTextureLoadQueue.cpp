@@ -118,9 +118,20 @@ void ProgressiveTextureLoadQueue::update(ofEventArgs & args){
 }
 
 
+int ProgressiveTextureLoadQueue::getNumBusy(){
+	int n = 0;
+	for(int i = 0; i < current.size(); i++){
+		if(current[i].loader->isBusy()){ //must have finished loading! time to start next one!
+			n++;
+		}
+	}
+	return n;
+}
+
+
 void ProgressiveTextureLoadQueue::draw(int x, int y){
 
-	string msg = "ProgressiveTextureLoadQueue(" + ofToString(numSimlutaneousLoads) + 
+	string msg = "ProgressiveTextureLoadQueue max(" + ofToString(numSimlutaneousLoads) + 
 	")\nbusy: " + string(current.size() ? "YES" : "NO" ) +
 	"\npending: " + ofToString(pending.size());
 
