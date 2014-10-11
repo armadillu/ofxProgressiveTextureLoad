@@ -63,100 +63,114 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 void ofxProgressiveTextureLoad::threadedFunction(){
 
 	getPocoThread().setName("ofxProgressiveTextureLoad " + ofToString(ID));
-	while(isThreadRunning()){
 
+	while(isThreadRunning()){
 		switch (state) {
 
 			case LOADING_PIXELS:{
+				
 				TS_START_NIF("loadPix " + ofToString(ID));
-				originalImage.setUseTexture(false);
-				bool ok = originalImage.loadImage(imagePath);
-				if (!ok){
-					setState(LOADING_FAILED);
-					ofLogError() << "ofxProgressiveTextureLoad: img loading failed! " << imagePath;
-					stopThread();
-				}else{
-					TS_STOP_NIF("loadPix " + ofToString(ID));
-					switch (originalImage.getPixelsRef().getImageType()) {
-						case OF_IMAGE_COLOR:
-							config.glFormat = GL_RGB;
-							config.numBytesPerPix = 3;
-							config.opencvFormat = CV_8UC3;
-							break;
-						case OF_IMAGE_COLOR_ALPHA:
-							config.glFormat = GL_RGBA;
-							config.numBytesPerPix = 4;
-							config.opencvFormat = CV_8UC4;
-							break;
-						case OF_IMAGE_GRAYSCALE:
-							config.glFormat = GL_LUMINANCE;
-							config.numBytesPerPix = 1;
-							config.opencvFormat = CV_8UC1;
-							break;
+				try{
+					originalImage.setUseTexture(false);
+					bool ok = originalImage.loadImage(imagePath);
+					if (!ok){
+						setState(LOADING_FAILED);
+						ofLogError() << "ofxProgressiveTextureLoad: img loading failed! " << imagePath;
+						stopThread();
+					}else{
+						TS_STOP_NIF("loadPix " + ofToString(ID));
+						switch (originalImage.getPixelsRef().getImageType()) {
+							case OF_IMAGE_COLOR:
+								config.glFormat = GL_RGB;
+								config.numBytesPerPix = 3;
+								config.opencvFormat = CV_8UC3;
+								break;
+							case OF_IMAGE_COLOR_ALPHA:
+								config.glFormat = GL_RGBA;
+								config.numBytesPerPix = 4;
+								config.opencvFormat = CV_8UC4;
+								break;
+							case OF_IMAGE_GRAYSCALE:
+								config.glFormat = GL_LUMINANCE;
+								config.numBytesPerPix = 1;
+								config.opencvFormat = CV_8UC1;
+								break;
+						}
+						setState(RESIZING_FOR_MIPMAPS);
 					}
-					setState(RESIZING_FOR_MIPMAPS);
+				}catch(...){
+					TS_STOP_NIF("loadPix " + ofToString(ID));
+					setState(LOADING_FAILED);
+					stopThread();
 				}
 				}break;
 
 			case RESIZING_FOR_MIPMAPS:
 				TS_START_NIF("resizeImageForMipMaps " + ofToString(ID));
-				resizeImageForMipMaps();
+				try{
+					resizeImageForMipMaps();
+				}catch(...){
+					setState(LOADING_FAILED); //mm TODO!
+					stopThread();
+					break;
+				}
 				setState(ALLOC_TEXTURE);
 				TS_STOP_NIF("resizeImageForMipMaps " + ofToString(ID));
 				return;
 				break;
 		}
 	}
+
 }
 
 
 void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 
-		int numC = config.numBytesPerPix;
-		ofPoint targetSize = getMipMap0ImageSize();
-		int newW = targetSize.x;
-		int newH = targetSize.y;
-		int mipMapLevel = floor(log( MAX(newW, newH) ) / log( 2 )) + 1; //THIS IS KEY! you need to do all mipmap levels or it will draw blank tex!
+	int numC = config.numBytesPerPix;
+	ofPoint targetSize = getMipMap0ImageSize();
+	int newW = targetSize.x;
+	int newH = targetSize.y;
+	int mipMapLevel = floor(log( MAX(newW, newH) ) / log( 2 )) + 1; //THIS IS KEY! you need to do all mipmap levels or it will draw blank tex!
 
-		//fill in an opencv image
-		cv::Mat mipMap0(originalImage.height, originalImage.width, config.opencvFormat);
+	//fill in an opencv image
+	cv::Mat mipMap0(originalImage.height, originalImage.width, config.opencvFormat);
 //		int wstep = mipMap0.step1(0);
 //		if( mipMap0.cols * mipMap0.channels() == wstep ){
-		memcpy( mipMap0.data,  originalImage.getPixels(), originalImage.width * originalImage.height * numC);
+	memcpy( mipMap0.data,  originalImage.getPixels(), originalImage.width * originalImage.height * numC);
 //		}else{
 //			for( int i=0; i < originalImage.height; i++ ) {
 //				memcpy( mipMap0.data + (i * wstep), originalImage.getPixels() + (i * originalImage.width * numC), originalImage.width * numC );
 //			}
 //		}
 
-		if (createMipMaps || (!createMipMaps && ofGetUsingArbTex() == false) ){
-			//resize to next power of two
-			cv::resize(mipMap0, mipMap0, cv::Size(newW, newH), 0, 0, resizeQuality);
+	if (createMipMaps || (!createMipMaps && ofGetUsingArbTex() == false) ){
+		//resize to next power of two
+		cv::resize(mipMap0, mipMap0, cv::Size(newW, newH), 0, 0, resizeQuality);
+	}
+
+	ofPixels *pix = new ofPixels();
+	pix->setFromPixels(mipMap0.data, newW, newH, numC);
+	mipMapLevelPixels[0] = pix;
+	//ofSaveImage(*pix, "pix" + ofToString(0) + ".jpg" ); //debug!
+
+	if(createMipMaps){
+
+		for(int currentMipMapLevel = 1 ; currentMipMapLevel < mipMapLevel; currentMipMapLevel++){
+
+			//TS_START_NIF("resize mipmap " + ofToString(currentMipMapLevel));
+			int www = mipMap0.cols/2;
+			int hhh = mipMap0.rows/2;
+			if (www < 1) www = 1; if (hhh < 1) hhh = 1;
+			cv::resize(mipMap0, mipMap0, cv::Size(www, hhh), 0, 0, resizeQuality);
+			ofPixels * tmpPix;
+			tmpPix = new ofPixels();
+			tmpPix->setFromPixels(mipMap0.data, mipMap0.cols, mipMap0.rows, numC);
+			mipMapLevelPixels[currentMipMapLevel] = tmpPix;
+			//ofLog() << "mipmaps for level " << currentMipMapLevel << " ready (" << tmpPix->getWidth() << ", " << tmpPix->getWidth()<< ")";
+			//TS_STOP_NIF("resize mipmap " + ofToString(currentMipMapLevel));
+			//ofSaveImage(*tmpPix, "pix" + ofToString(currentMipMapLevel) + ".jpg" ); //debug!
 		}
-
-		ofPixels *pix = new ofPixels();
-		pix->setFromPixels(mipMap0.data, newW, newH, numC);
-		mipMapLevelPixels[0] = pix;
-		//ofSaveImage(*pix, "pix" + ofToString(0) + ".jpg" ); //debug!
-
-		if(createMipMaps){
-
-			for(int currentMipMapLevel = 1 ; currentMipMapLevel < mipMapLevel; currentMipMapLevel++){
-
-				//TS_START_NIF("resize mipmap " + ofToString(currentMipMapLevel));
-				int www = mipMap0.cols/2;
-				int hhh = mipMap0.rows/2;
-				if (www < 1) www = 1; if (hhh < 1) hhh = 1;
-				cv::resize(mipMap0, mipMap0, cv::Size(www, hhh), 0, 0, resizeQuality);
-				ofPixels * tmpPix;
-				tmpPix = new ofPixels();
-				tmpPix->setFromPixels(mipMap0.data, mipMap0.cols, mipMap0.rows, numC);
-				mipMapLevelPixels[currentMipMapLevel] = tmpPix;
-				//ofLog() << "mipmaps for level " << currentMipMapLevel << " ready (" << tmpPix->getWidth() << ", " << tmpPix->getWidth()<< ")";
-				//TS_STOP_NIF("resize mipmap " + ofToString(currentMipMapLevel));
-				//ofSaveImage(*tmpPix, "pix" + ofToString(currentMipMapLevel) + ".jpg" ); //debug!
-			}
-		}
+	}
 }
 
 
@@ -183,6 +197,7 @@ bool ofxProgressiveTextureLoad::isReadyToDrawWhileLoading(){
 
 void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 
+	TS_START_ACC("ofxProgressiveTextureLoad u");
 	switch (state) {
 
 		case LOADING_FAILED:{
@@ -242,7 +257,6 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 			}break;
 
 		case LOADING_MIP_MAPS:{
-
 			bool wrappingUp = false;
 			bool canGoOn = true;
 			uint64_t timeSpentSoFar = 0;
@@ -250,7 +264,7 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 				if (mipMapLevelLoaded){
 					texture->bind();
 					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_BASE_LEVEL, currentMipMapLevel);
-					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAX_LEVEL, mipMapLevelPixels.size() - 1);
+					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAX_LEVEL, mipMapLevelPixels.size() - 1  );
 					int mipmapsLoaded = mipMapLevelPixels.size() - currentMipMapLevel;
 					if (mipmapsLoaded >= 1 && !notifiedReadyToDraw){ //notify the user that the texture is drawable right now, and will progressively draw
 						notifiedReadyToDraw = true;
@@ -304,6 +318,7 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 		setState(IDLE);
 		if(OFX_PROG_TEX_LOADER_MEAURE_TIMINGS) TS_STOP_NIF("total tex load time " + ofToString(ID));
 	}
+	TS_STOP_ACC("ofxProgressiveTextureLoad u");
 }
 
 void ofxProgressiveTextureLoad::wrapUp(){

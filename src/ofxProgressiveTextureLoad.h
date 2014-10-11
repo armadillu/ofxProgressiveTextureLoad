@@ -14,16 +14,22 @@
 #include "ofxOpenCv.h"
 
 //define OFX_PROG_TEX_LOADER_MEAURE_TIMINGS as FALSE to not measure timings with ofxTimeMeasurements
-#define OFX_PROG_TEX_LOADER_MEAURE_TIMINGS FALSE
+#define OFX_PROG_TEX_LOADER_MEAURE_TIMINGS	TRUE
+#define DEBUG_TEX_LOADER_TIMES				FALSE /*requires timings and ofxTimeMeasurements*/
+													/*very verbose timings if true*/
 
 #if(OFX_PROG_TEX_LOADER_MEAURE_TIMINGS)
 	#include "ofxTimeMeasurements.h"
-#else
+#endif
+
+#if(!DEBUG_TEX_LOADER_TIMES) //override TS_* if not debugging tex loader times
 	#undef TS_START_NIF
 	#undef TS_STOP_NIF
 	#define TS_START_NIF(x) ;
 	#define TS_STOP_NIF(x)	;
 #endif
+
+
 
 
 class ofxProgressiveTextureLoad: public ofThread{
@@ -53,6 +59,8 @@ public:
 	float getTimeSpentLastFrame(){ return lastFrameTime;} //in ms!
 	void setVerbose(bool v){verbose = v;}
 	bool isBusy(){return state != IDLE;}
+	bool isUploadingTextures(){return state == LOADING_TEX || state == LOADING_MIP_MAPS || state == ALLOC_TEXTURE; }
+	
 	string getStateString();
 
 	void stopLoadingAsap(); //TODO! will get back to idle, tex remains as it is

@@ -78,10 +78,23 @@ void ProgressiveTextureLoadQueue::update(ofEventArgs & args){
 	vector<int> toDelete;
 
 	//see who is finished
+	int numUploadingTextures = 0;
 	for(int i = 0; i < current.size(); i++){
 		if(!current[i].loader->isBusy()){ //must have finished loading! time to start next one!
 			toDelete.push_back(i);
 		}
+		if(current[i].loader->isUploadingTextures()){
+			numUploadingTextures++;
+		}
+	}
+
+	float timePerLoader = maxTimeTakenPerFrame;
+	if (numUploadingTextures > 0){
+		timePerLoader /= numUploadingTextures;
+	}
+
+	for(int i = 0; i < current.size(); i++){
+		current[i].loader->setTargetTimePerFrame(timePerLoader);
 	}
 
 	//dealloc and remove from current all the finished ones
@@ -93,7 +106,7 @@ void ProgressiveTextureLoadQueue::update(ofEventArgs & args){
 
 	//is there stuff to do?
 	//stagger a bit jobs across frames too with %3
-	if(current.size() < numSimlutaneousLoads && (ofGetFrameNum()%3 == 1)){
+	if(current.size() < numSimlutaneousLoads){
 		if(pending.size()){
 			current.push_back(pending[0]);
 			pending.erase(pending.begin());
@@ -107,8 +120,10 @@ void ProgressiveTextureLoadQueue::update(ofEventArgs & args){
 
 void ProgressiveTextureLoadQueue::draw(int x, int y){
 
-	string msg = "ProgressiveTextureLoadQueue\nbusy: " + string(current.size() ? "YES" : "NO" )+
+	string msg = "ProgressiveTextureLoadQueue(" + ofToString(numSimlutaneousLoads) + 
+	")\nbusy: " + string(current.size() ? "YES" : "NO" ) +
 	"\npending: " + ofToString(pending.size());
+
 	for(int i = 0 ; i < current.size(); i++){
 		msg += "\n  Loader " + ofToString(i) + ": " + current[i].loader->getStateString();
 	}
