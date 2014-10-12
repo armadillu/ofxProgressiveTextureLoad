@@ -47,7 +47,7 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 	if (state == IDLE && texture){
 		startTime = ofGetElapsedTimef();
 		createMipMaps = withMipMaps;
-		pendingNotification = false;
+		pendingNotification = cancelAsap = false;
 		loadedScanLinesSoFar = 0;
 		imagePath = path;
 		setState(LOADING_PIXELS);
@@ -247,55 +247,65 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 			}break;
 
 		case LOADING_TEX:{
-			uint64_t currentTime = 0;
-			progressiveTextureUpload(currentMipMapLevel, currentTime);
-			if (mipMapLevelLoaded){
-				//TS_STOP_NIF("upload mipmap 0");
-				texture->setTextureMinMagFilter(GL_LINEAR, GL_LINEAR);
+			if (cancelAsap){
+				setState(IDLE);
 				wrapUp();
+			}else{
+				uint64_t currentTime = 0;
+				progressiveTextureUpload(currentMipMapLevel, currentTime);
+				if (mipMapLevelLoaded){
+					//TS_STOP_NIF("upload mipmap 0");
+					texture->setTextureMinMagFilter(GL_LINEAR, GL_LINEAR);
+					wrapUp();
+				}
 			}
 			}break;
 
 		case LOADING_MIP_MAPS:{
-			bool wrappingUp = false;
-			bool canGoOn = true;
-			uint64_t timeSpentSoFar = 0;
-			while(canGoOn && !wrappingUp){
-				if (mipMapLevelLoaded){
-					texture->bind();
-					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_BASE_LEVEL, currentMipMapLevel);
-					glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAX_LEVEL, mipMapLevelPixels.size() - 1  );
-					int mipmapsLoaded = mipMapLevelPixels.size() - currentMipMapLevel;
-					if (mipmapsLoaded >= 1 && !notifiedReadyToDraw){ //notify the user that the texture is drawable right now, and will progressively draw
-						notifiedReadyToDraw = true;
-						textureEvent ev;
-						ev.loaded = true;
-						ev.who = this;
-						ev.tex = texture;
-						ev.elapsedTime = ofGetElapsedTimef() - startTime;
-						ev.texturePath = imagePath;
-						ofNotifyEvent(textureDrawable, ev, this);
-						glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-						glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-					}
-					if (mipmapsLoaded >= 4){
-						glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_LOD_BIAS, texLodBias);
-					}
-					texture->unbind();
+			if (cancelAsap){
+				setState(IDLE);
+				wrapUp();
+			}else{
+				bool wrappingUp = false;
+				bool canGoOn = true;
+				uint64_t timeSpentSoFar = 0;
+				while(canGoOn && !wrappingUp){
+					if (mipMapLevelLoaded){
+						texture->bind();
+						glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_BASE_LEVEL, currentMipMapLevel);
+						glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAX_LEVEL, mipMapLevelPixels.size() - 1  );
+						int mipmapsLoaded = mipMapLevelPixels.size() - currentMipMapLevel;
+						if (mipmapsLoaded >= 1 && !notifiedReadyToDraw){ //notify the user that the texture is drawable right now, and will progressively draw
+							notifiedReadyToDraw = true;
+							textureEvent ev;
+							ev.loaded = true;
+							ev.who = this;
+							ev.tex = texture;
+							ev.elapsedTime = ofGetElapsedTimef() - startTime;
+							ev.texturePath = imagePath;
+							ofNotifyEvent(textureDrawable, ev, this);
+							glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+							glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+						}
+						if (mipmapsLoaded >= 4){
+							glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_LOD_BIAS, texLodBias);
+						}
+						texture->unbind();
 
-					mipMapLevelLoaded = false;
-					mipMapLevelAllocPending = true;
+						mipMapLevelLoaded = false;
+						mipMapLevelAllocPending = true;
 
-					if (currentMipMapLevel == 0){ //all mipmaps loaded! done!
-						wrapUp();
-						wrappingUp = true;
-						TS_STOP_NIF("upload mipmaps " + ofToString(ID));
-					}else{
-						currentMipMapLevel--;
+						if (currentMipMapLevel == 0){ //all mipmaps loaded! done!
+							wrapUp();
+							wrappingUp = true;
+							TS_STOP_NIF("upload mipmaps " + ofToString(ID));
+						}else{
+							currentMipMapLevel--;
+						}
 					}
-				}
-				if(!wrappingUp){
-					canGoOn = progressiveTextureUpload(currentMipMapLevel, timeSpentSoFar);
+					if(!wrappingUp){
+						canGoOn = progressiveTextureUpload(currentMipMapLevel, timeSpentSoFar);
+					}
 				}
 			}
 			}break;
@@ -305,11 +315,12 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 
 		pendingNotification = false;
 		textureEvent ev;
-		if (state == LOADING_FAILED ){
+		if (state == LOADING_FAILED || cancelAsap == true){
 			ev.loaded = false;
 		}else{
 			ev.loaded = true;
 		}
+		ev.canceledLoad = cancelAsap;
 		ev.who = this;
 		ev.tex = texture;
 		ev.elapsedTime = ofGetElapsedTimef() - startTime;
@@ -470,7 +481,7 @@ void ofxProgressiveTextureLoad::draw(int x, int y, bool debugImages){
 }
 
 void ofxProgressiveTextureLoad::stopLoadingAsap(){
-	//TODO!
+	cancelAsap = true;
 }
 
 string ofxProgressiveTextureLoad::getStateString(){

@@ -74,9 +74,11 @@ public:
 		ofTexture*						tex;
 		string							texturePath;
 		float 							elapsedTime;
+		bool							canceledLoad;
 
 		textureEvent(){
 			loaded = true;
+			canceledLoad = false;
 			who = NULL;
 		}
 	};
@@ -133,6 +135,8 @@ private:
 	float				lastFrameTime;
 
 	bool				notifiedReadyToDraw;
+
+	bool				cancelAsap;
 
 
 	map<int, ofPixels*>	mipMapLevelPixels;
