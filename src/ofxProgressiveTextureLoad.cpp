@@ -500,7 +500,7 @@ string ofxProgressiveTextureLoad::getStateString(){
 		}
 		case LOADING_MIP_MAPS:{
 			msg += "LOADING_MIP_MAPS (currentMipMap: " + ofToString(currentMipMapLevel);
-			float percent = 100.0f * loadedScanLinesSoFar / mipMapLevelPixels[0]->getHeight();
+			float percent = 100.0f * loadedScanLinesSoFar / mipMapLevelPixels[currentMipMapLevel]->getHeight();
 			msg += " " +ofToString(percent,1) + "% loaded)";
 			return msg;
 		}
