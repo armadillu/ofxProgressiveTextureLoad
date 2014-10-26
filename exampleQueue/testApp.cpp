@@ -26,11 +26,11 @@ void testApp::setup(){
 
 	ProgressiveTextureLoadQueue * q = ProgressiveTextureLoadQueue::instance();
 
-	q->setTexLodBias(-1.5);
+	q->setTexLodBias(-0.5); //negative gives you lower mipmaps >> sharper
 	q->setScanlinesPerLoop(32);
-	q->setTargetTimePerFrame(4.0);
+	q->setTargetTimePerFrame(3);
 	q->setNumberSimultaneousLoads(1);
-	q->setVerbose(false);
+	q->setVerbose(true);
 
 	for(int i = 0; i < 3; i++){
 		ofTexture* t = new ofTexture(); //create your own texture to got data loaded into; it will be cleared!
@@ -101,7 +101,9 @@ void testApp::draw(){
 	ofPopMatrix();
 
 	//see if GL is happy
-	ofxGLError::draw(20,20);
+	ofxGLError::draw(20,ofGetHeight() - 104);
+
+	ProgressiveTextureLoadQueue::instance()->draw(20, ofGetHeight() - 80);
 }
 
 
