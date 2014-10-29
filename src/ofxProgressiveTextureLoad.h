@@ -22,14 +22,6 @@
 	#include "ofxTimeMeasurements.h"
 #endif
 
-#if(!DEBUG_TEX_LOADER_TIMES) //override TS_* if not debugging tex loader times
-	#undef TS_START_NIF
-	#undef TS_STOP_NIF
-	#define TS_START_NIF(x) ;
-	#define TS_STOP_NIF(x)	;
-#endif
-
-
 
 
 class ofxProgressiveTextureLoad: public ofThread{

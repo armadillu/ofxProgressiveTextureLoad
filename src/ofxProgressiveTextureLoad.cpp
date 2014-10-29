@@ -9,6 +9,13 @@
 #include "ofxProgressiveTextureLoad.h"
 #include <math.h>
 
+#if(!DEBUG_TEX_LOADER_TIMES) //override TS_* if not debugging tex loader times
+#undef TS_START_NIF
+#undef TS_STOP_NIF
+#define TS_START_NIF(x) ;
+#define TS_STOP_NIF(x)	;
+#endif
+
 int ofxProgressiveTextureLoad::numInstancesCreated = 0;
 
 ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
@@ -506,3 +513,8 @@ string ofxProgressiveTextureLoad::getStateString(){
 		}
 	}
 }
+
+#if(DEBUG_TEX_LOADER_TIMES) //override TS_* if not debugging tex loader times
+#define TS_START_NIF(x) TIME_SAMPLE_START_NOIF(x, ##__VA_ARGS__);
+#define TS_STOP_NIF(x)	TIME_SAMPLE_STOP_NOIF(x, ##__VA_ARGS__);
+#endif
