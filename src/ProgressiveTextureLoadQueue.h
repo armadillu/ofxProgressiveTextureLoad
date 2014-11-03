@@ -10,6 +10,7 @@
 #define BaseApp_ProgressiveTextureLoadQueue_h
 
 #include "ofxProgressiveTextureLoad.h"
+#include "ProgressiveTextureLoadQueue.h"
 
 class ProgressiveTextureLoadQueue{
 
