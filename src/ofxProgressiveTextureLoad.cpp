@@ -295,7 +295,7 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 							glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 						}
 						if (mipmapsLoaded >= 4){
-							glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_LOD_BIAS, texLodBias);
+							glTexParameterf(texture->texData.textureTarget, GL_TEXTURE_LOD_BIAS, texLodBias);
 						}
 						texture->unbind();
 
@@ -365,7 +365,11 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 	int scanlinesLoadedThisFrame = 0;
 	int loops = 0;
 
-	ofSetPixelStoreiAlignment(GL_PACK_ALIGNMENT, pix->getWidth(), 1, ofGetNumChannelsFromGLFormat(glFormat));
+	#if (OF_VERSION_PATCH <= 3)
+		ofSetPixelStorei(pix->getWidth(), 1, ofGetNumChannelsFromGLFormat(glFormat));
+	#else
+		ofSetPixelStoreiAlignment(GL_PACK_ALIGNMENT, pix->getWidth(), 1, ofGetNumChannelsFromGLFormat(glFormat));
+	#endif
 
 	while (currentTime < maxTimeTakenPerFrame * 1000.0f && loadedScanLinesSoFar < pix->getHeight()) {
 
