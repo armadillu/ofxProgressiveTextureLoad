@@ -108,6 +108,7 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 				}catch(...){
 					TS_STOP_NIF("loadPix " + ofToString(ID));
 					setState(LOADING_FAILED);
+					ofLogError() << "exception in ofxProgressiveTextureLoad::threadedFunction()";
 					stopThread();
 				}
 				}break;
