@@ -119,6 +119,7 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 					resizeImageForMipMaps();
 				}catch(...){
 					setState(LOADING_FAILED); //mm TODO!
+					ofLogError() << "ofxProgressiveTextureLoad: img resizing failed! " << imagePath;
 					stopThread();
 					break;
 				}
