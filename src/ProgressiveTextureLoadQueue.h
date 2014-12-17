@@ -17,6 +17,8 @@ class ProgressiveTextureLoadQueue{
 public:
 
 	static ProgressiveTextureLoadQueue* instance();
+	void update();
+
 
 	//its your responsability to add listeners to the returned object (ret)
 	//to get notified when the texture is fully/partially loaded with:
@@ -63,7 +65,6 @@ private:
 		}
 	};
 
-	void update(ofEventArgs&);
 
 	static ProgressiveTextureLoadQueue*		singleton;
 

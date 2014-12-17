@@ -31,7 +31,7 @@ ProgressiveTextureLoadQueue::ProgressiveTextureLoadQueue(){
 	ids = 0;
 	verbose = false;
 
-	ofAddListener(ofEvents().update, this, &ProgressiveTextureLoadQueue::update);
+	//ofAddListener(ofEvents().update, this, &ProgressiveTextureLoadQueue::update, OF_EVENT_ORDER_AFTER_APP);
 }
 
 
@@ -73,13 +73,16 @@ void ProgressiveTextureLoadQueue::setTargetTimePerFrame(float ms){
 	if(maxTimeTakenPerFrame < 0.01) maxTimeTakenPerFrame = 0.01; //save dumb developers from themselves
 }
 
-void ProgressiveTextureLoadQueue::update(ofEventArgs & args){
+void ProgressiveTextureLoadQueue::update(){
 
 	vector<int> toDelete;
 
 	//see who is finished
 	int numUploadingTextures = 0;
 	for(int i = 0; i < current.size(); i++){
+
+		current[i].loader->update();
+
 		if(!current[i].loader->isBusy()){ //must have finished loading! time to start next one!
 			toDelete.push_back(i);
 		}
@@ -105,15 +108,16 @@ void ProgressiveTextureLoadQueue::update(ofEventArgs & args){
 	}
 
 	//is there stuff to do?
-	//stagger a bit jobs across frames too with %3
-	if(current.size() < numSimlutaneousLoads){
-		if(pending.size()){
-			current.push_back(pending[0]);
-			pending.erase(pending.begin());
-			int indx = current.size()-1;
-			current[indx].loader->loadTexture(current[indx].path, current[indx].withMipMaps);
-			//ofLogNotice() << "load texture " << current[indx].ID;
-		}
+
+	int maxPerFrame = 5;
+	int c = 0;
+	while(pending.size() && current.size() < numSimlutaneousLoads && c < maxPerFrame){
+		current.push_back(pending[0]);
+		pending.erase(pending.begin());
+		int indx = current.size()-1;
+		current[indx].loader->loadTexture(current[indx].path, current[indx].withMipMaps);
+		//ofLogNotice() << "load texture " << current[indx].ID;
+		c++;
 	}
 }
 

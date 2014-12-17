@@ -34,6 +34,8 @@ public:
 	void setup(ofTexture* tex, int resizeQuality = CV_INTER_CUBIC);
 	void loadTexture(string path, bool withMipMaps);
 
+	void update();
+
 	//for each update() call (one frame), the addon will loop uploading texture regions
 	//as scanlines, until we reach the target time per frame to be spent uploading texture data
 	//how many scanlines per loop will determine the granularity of the time accuracy. Less scanlines
@@ -129,11 +131,13 @@ private:
 	bool				notifiedReadyToDraw;
 
 	bool				cancelAsap;
+	//float				cancelAsapDelay;
+
+	bool 				isSetup;
 
 
 	map<int, ofPixels*>	mipMapLevelPixels;
 
-	void update(ofEventArgs &d);
 	void threadedFunction();
 	void wrapUp();
 	void resizeImageForMipMaps();

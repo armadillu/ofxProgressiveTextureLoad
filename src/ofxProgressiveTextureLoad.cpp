@@ -30,10 +30,12 @@ ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 	texture = NULL;
 	ID = numInstancesCreated;
 	numInstancesCreated++;
+	isSetup = false;
+	cancelAsap = false;
 }
 
 ofxProgressiveTextureLoad::~ofxProgressiveTextureLoad(){
-	ofRemoveListener(ofEvents().update, this, &ofxProgressiveTextureLoad::update); //just in case
+	//ofRemoveListener(ofEvents().update, this, &ofxProgressiveTextureLoad::update); //just in case
 	//delete all mipmap pixels
 	if(mipMapLevelPixels.size()){
 		for(int i = 0; i < mipMapLevelPixels.size(); i++){
@@ -47,6 +49,7 @@ void ofxProgressiveTextureLoad::setup(ofTexture* tex, int resizeQuality_){
 
 	resizeQuality = resizeQuality_;
 	texture = tex;
+	isSetup = true;
 }
 
 void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
@@ -59,7 +62,7 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 		imagePath = path;
 		setState(LOADING_PIXELS);
 		startThread();
-		ofAddListener(ofEvents().update, this, &ofxProgressiveTextureLoad::update);
+		//ofAddListener(ofEvents().update, this, &ofxProgressiveTextureLoad::update);
 		if(OFX_PROG_TEX_LOADER_MEAURE_TIMINGS) TS_START_NIF("total tex load time " + ofToString(ID));
 	}else{
 		ofLogError() << "cant load texture, busy!";
@@ -204,9 +207,12 @@ bool ofxProgressiveTextureLoad::isReadyToDrawWhileLoading(){
 	return false;
 }
 
-void ofxProgressiveTextureLoad::update(ofEventArgs &d){
+void ofxProgressiveTextureLoad::update(){
 
 	TS_START_ACC("ProgTexLoad u");
+
+	//if(cancelAsap) cancelAsapDelay += 0.016;
+
 	switch (state) {
 
 		case LOADING_FAILED:{
@@ -257,8 +263,8 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 
 		case LOADING_TEX:{
 			if (cancelAsap){
-				setState(IDLE);
 				wrapUp();
+				setState(IDLE);
 			}else{
 				uint64_t currentTime = 0;
 				progressiveTextureUpload(currentMipMapLevel, currentTime);
@@ -272,8 +278,8 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 
 		case LOADING_MIP_MAPS:{
 			if (cancelAsap){
-				setState(IDLE);
 				wrapUp();
+				setState(IDLE);
 			}else{
 				bool wrappingUp = false;
 				bool canGoOn = true;
@@ -305,9 +311,10 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 						mipMapLevelAllocPending = true;
 
 						if (currentMipMapLevel == 0){ //all mipmaps loaded! done!
-							wrapUp();
 							wrappingUp = true;
+							wrapUp();
 							TS_STOP_NIF("upload mipmaps " + ofToString(ID));
+							setState(IDLE);
 						}else{
 							currentMipMapLevel--;
 						}
@@ -324,7 +331,7 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 
 		pendingNotification = false;
 		textureEvent ev;
-		if (state == LOADING_FAILED || cancelAsap == true){
+		if (state == LOADING_FAILED || cancelAsap){
 			ev.loaded = false;
 		}else{
 			ev.loaded = true;
@@ -335,7 +342,6 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 		ev.elapsedTime = ofGetElapsedTimef() - startTime;
 		ev.texturePath = imagePath;
 		ofNotifyEvent(textureReady, ev, this);
-		setState(IDLE);
 		if(OFX_PROG_TEX_LOADER_MEAURE_TIMINGS) TS_STOP_NIF("total tex load time " + ofToString(ID));
 	}
 	TS_STOP_ACC("ProgTexLoad u");
@@ -343,7 +349,7 @@ void ofxProgressiveTextureLoad::update(ofEventArgs &d){
 
 void ofxProgressiveTextureLoad::wrapUp(){
 
-	ofRemoveListener(ofEvents().update, this, &ofxProgressiveTextureLoad::update);
+	//ofRemoveListener(ofEvents().update, this, &ofxProgressiveTextureLoad::update);
 	//delete all mipmap pixels
 	for(int i = 0; i < mipMapLevelPixels.size(); i++){
 		delete mipMapLevelPixels[i];
@@ -508,13 +514,13 @@ string ofxProgressiveTextureLoad::getStateString(){
 		case LOADING_TEX:{
 			msg += "LOADING_TEX (";
 			float percent = 100.0f * loadedScanLinesSoFar / mipMapLevelPixels[0]->getHeight();
-			msg += ofToString(percent,1) + "% loaded) " + (cancelAsap  ? "pending cancel!" : "");
+			msg += ofToString(percent,1) + "% loaded) " + (cancelAsap  ? " canceling!" : "");
 			return msg;
 		}
 		case LOADING_MIP_MAPS:{
 			msg += "LOADING_MIP_MAPS (currentMipMap: " + ofToString(currentMipMapLevel);
 			float percent = 100.0f * loadedScanLinesSoFar / mipMapLevelPixels[currentMipMapLevel]->getHeight();
-			msg += " " +ofToString(percent,1) + "% loaded)" + (cancelAsap  ? "pending cancel!" : "");
+			msg += " " +ofToString(percent,1) + "% loaded)" + (cancelAsap  ? " canceling! " : "");
 			return msg;
 		}
 	}
