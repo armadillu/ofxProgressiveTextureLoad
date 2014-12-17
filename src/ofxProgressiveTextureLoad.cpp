@@ -16,7 +16,9 @@
 #define TS_STOP_NIF(x)	;
 #endif
 
+
 int ofxProgressiveTextureLoad::numInstancesCreated = 0;
+float ofxProgressiveTextureLoad::numMbLoaded = 0;
 
 ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 
@@ -337,6 +339,7 @@ void ofxProgressiveTextureLoad::update(){
 		ev.canceledLoad = cancelAsap;
 		ev.who = this;
 		ev.tex = texture;
+		numMbLoaded += ev.tex->getWidth() * ev.tex->getHeight() * config.numBytesPerPix / float(1024 * 1024);
 		ev.elapsedTime = ofGetElapsedTimef() - startTime;
 		ev.texturePath = imagePath;
 		ofNotifyEvent(textureReady, ev, this);

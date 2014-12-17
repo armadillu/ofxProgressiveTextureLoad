@@ -136,8 +136,8 @@ int ProgressiveTextureLoadQueue::getNumBusy(){
 void ProgressiveTextureLoadQueue::draw(int x, int y){
 
 	string msg = "ProgressiveTextureLoadQueue max(" + ofToString(numSimlutaneousLoads) + 
-	")\nbusy: " + string(current.size() ? "YES" : "NO" ) +
-	"\npending: " + ofToString(pending.size());
+	")\nTotal Loaded: " + ofToString(ofxProgressiveTextureLoad::getNumMbLoaded()) + "MB"+
+	"\nPending: " + ofToString(pending.size());
 
 	for(int i = 0 ; i < current.size(); i++){
 		msg += "\n  Loader " + ofToString(i) + ": " + current[i].loader->getStateString();

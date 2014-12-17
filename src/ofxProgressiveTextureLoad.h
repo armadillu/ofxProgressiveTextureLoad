@@ -80,7 +80,9 @@ public:
 	ofEvent<textureEvent>	textureReady; //will notify when texture is fully loaded, or failed to load
 	ofEvent<textureEvent>	textureDrawable; //will notfy when texture is drawable,
 											//it will   begind drawing in low res, and progressivelly improve!
-
+	
+	static int getNumInstancesCreated(){return numInstancesCreated;}
+	static float getNumMbLoaded(){return numMbLoaded;}
 private:
 
 	enum State{
@@ -149,6 +151,8 @@ private:
 
 	int					ID;
 	static int			numInstancesCreated;
+	static float		numMbLoaded;
+
 
 };
 
