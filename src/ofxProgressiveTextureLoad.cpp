@@ -35,7 +35,6 @@ ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 }
 
 ofxProgressiveTextureLoad::~ofxProgressiveTextureLoad(){
-	//ofRemoveListener(ofEvents().update, this, &ofxProgressiveTextureLoad::update); //just in case
 	//delete all mipmap pixels
 	if(mipMapLevelPixels.size()){
 		for(int i = 0; i < mipMapLevelPixels.size(); i++){
@@ -132,7 +131,6 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 				break;
 		}
 	}
-
 }
 
 
@@ -263,8 +261,8 @@ void ofxProgressiveTextureLoad::update(){
 
 		case LOADING_TEX:{
 			if (cancelAsap){
-				wrapUp();
 				setState(IDLE);
+				wrapUp();
 			}else{
 				uint64_t currentTime = 0;
 				progressiveTextureUpload(currentMipMapLevel, currentTime);
@@ -278,8 +276,8 @@ void ofxProgressiveTextureLoad::update(){
 
 		case LOADING_MIP_MAPS:{
 			if (cancelAsap){
-				wrapUp();
 				setState(IDLE);
+				wrapUp();
 			}else{
 				bool wrappingUp = false;
 				bool canGoOn = true;
@@ -324,7 +322,7 @@ void ofxProgressiveTextureLoad::update(){
 					}
 				}
 			}
-			}break;
+		}break;
 	}
 
 	if(pendingNotification){
@@ -342,21 +340,14 @@ void ofxProgressiveTextureLoad::update(){
 		ev.elapsedTime = ofGetElapsedTimef() - startTime;
 		ev.texturePath = imagePath;
 		ofNotifyEvent(textureReady, ev, this);
+		setState(IDLE);
 		if(OFX_PROG_TEX_LOADER_MEAURE_TIMINGS) TS_STOP_NIF("total tex load time " + ofToString(ID));
 	}
 	TS_STOP_ACC("ProgTexLoad u");
 }
 
 void ofxProgressiveTextureLoad::wrapUp(){
-
-	//ofRemoveListener(ofEvents().update, this, &ofxProgressiveTextureLoad::update);
-	//delete all mipmap pixels
-	for(int i = 0; i < mipMapLevelPixels.size(); i++){
-		delete mipMapLevelPixels[i];
-	}
-	mipMapLevelPixels.clear();
 	pendingNotification = true;
-	//setState(IDLE);
 }
 
 
