@@ -63,15 +63,20 @@ public:
 	void draw(int, int, bool debugImages = false); //for debug purposes!
 
 	struct textureEvent{
-		bool							loaded;
+		bool							ok; //used to be "loaded"
+											//a load cancelled tex will return an "ok" in the event !
+
+		bool							fullyLoaded;
+		bool							readyToDraw;
+		bool							canceledLoad;
+
 		ofxProgressiveTextureLoad*		who;
 		ofTexture*						tex;
 		string							texturePath;
 		float 							elapsedTime;
-		bool							canceledLoad;
 
 		textureEvent(){
-			loaded = true;
+			ok = true;
 			canceledLoad = false;
 			who = NULL;
 		}

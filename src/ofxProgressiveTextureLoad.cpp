@@ -296,7 +296,9 @@ void ofxProgressiveTextureLoad::update(){
 						if (mipmapsLoaded >= 1 && !notifiedReadyToDraw){ //notify the user that the texture is drawable right now, and will progressively draw
 							notifiedReadyToDraw = true;
 							textureEvent ev;
-							ev.loaded = true;
+							ev.ok = true;
+							ev.fullyLoaded = false;
+							ev.readyToDraw = true;
 							ev.who = this;
 							ev.tex = texture;
 							ev.elapsedTime = ofGetElapsedTimef() - startTime;
@@ -335,19 +337,22 @@ void ofxProgressiveTextureLoad::update(){
 		pendingNotification = false;
 		textureEvent ev;
 		if (state == LOADING_FAILED || cancelAsap){
-			ev.loaded = false;
+			ev.ok = false;
+			ev.fullyLoaded = false;
+			ev.readyToDraw = false;
 		}else{
-			ev.loaded = true;
+			ev.ok = true;
+			ev.fullyLoaded = true;
+			ev.readyToDraw = true;
 		}
 		ev.canceledLoad = cancelAsap;
 		ev.who = this;
 		ev.tex = texture;
-		if(ev.loaded){
+		if(ev.ok){
 			float thisTex = ev.tex->getWidth() * ev.tex->getHeight() * config.numBytesPerPix / float(1024 * 1024);
-			if(createMipMaps) thisTex *= 1.33;
+			if(createMipMaps) thisTex *= 1.33f;
 			numMbLoaded += thisTex;
 		}
-
 		ev.elapsedTime = ofGetElapsedTimef() - startTime;
 		ev.texturePath = imagePath;
 		ofNotifyEvent(textureReady, ev, this);
