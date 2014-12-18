@@ -61,7 +61,7 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 	if (state == IDLE && texture){
 		startTime = ofGetElapsedTimef();
 		createMipMaps = withMipMaps;
-		pendingNotification = cancelAsap = false;
+		pendingNotification = false;
 		loadedScanLinesSoFar = 0;
 		imagePath = path;
 		setState(LOADING_PIXELS);
@@ -78,6 +78,11 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 
 	getPocoThread().setName("ofxProgressiveTextureLoad " + ofToString(ID));
 
+	if(cancelAsap){
+		pendingNotification = true;
+		state = IDLE;
+		return;
+	}
 	while(isThreadRunning()){
 		switch (state) {
 
@@ -337,7 +342,10 @@ void ofxProgressiveTextureLoad::update(){
 		pendingNotification = false;
 		textureEvent ev;
 		if (state == LOADING_FAILED || cancelAsap){
-			ev.ok = false;
+			if(state == LOADING_FAILED)
+				ev.ok = false;
+			else
+				ev.ok == cancelAsap;
 			ev.fullyLoaded = false;
 			ev.readyToDraw = false;
 		}else{
@@ -348,7 +356,7 @@ void ofxProgressiveTextureLoad::update(){
 		ev.canceledLoad = cancelAsap;
 		ev.who = this;
 		ev.tex = texture;
-		if(ev.ok){
+		if(ev.fullyLoaded && ev.ok){
 			float thisTex = ev.tex->getWidth() * ev.tex->getHeight() * config.numBytesPerPix / float(1024 * 1024);
 			if(createMipMaps) thisTex *= 1.33f;
 			numMbLoaded += thisTex;
