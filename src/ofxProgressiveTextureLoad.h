@@ -82,7 +82,9 @@ public:
 											//it will   begind drawing in low res, and progressivelly improve!
 	
 	static int getNumInstancesCreated(){return numInstancesCreated;}
+	static int getNumInstances(){return numInstances;}
 	static float getNumMbLoaded(){return numMbLoaded;}
+
 private:
 
 	enum State{
@@ -151,6 +153,7 @@ private:
 
 	int					ID;
 	static int			numInstancesCreated;
+	static int			numInstances;
 	static float		numMbLoaded;
 
 

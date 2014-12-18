@@ -18,6 +18,7 @@
 
 
 int ofxProgressiveTextureLoad::numInstancesCreated = 0;
+int ofxProgressiveTextureLoad::numInstances = 0;
 float ofxProgressiveTextureLoad::numMbLoaded = 0;
 
 ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
@@ -32,6 +33,7 @@ ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 	texture = NULL;
 	ID = numInstancesCreated;
 	numInstancesCreated++;
+	numInstances++;
 	isSetup = false;
 	cancelAsap = false;
 }
@@ -44,6 +46,7 @@ ofxProgressiveTextureLoad::~ofxProgressiveTextureLoad(){
 		}
 		mipMapLevelPixels.clear();
 	}
+	numInstances--;
 }
 
 void ofxProgressiveTextureLoad::setup(ofTexture* tex, int resizeQuality_){
@@ -340,6 +343,7 @@ void ofxProgressiveTextureLoad::update(){
 		ev.who = this;
 		ev.tex = texture;
 		numMbLoaded += ev.tex->getWidth() * ev.tex->getHeight() * config.numBytesPerPix / float(1024 * 1024);
+		if(createMipMaps) numMbLoaded *= 1.33;
 		ev.elapsedTime = ofGetElapsedTimef() - startTime;
 		ev.texturePath = imagePath;
 		ofNotifyEvent(textureReady, ev, this);

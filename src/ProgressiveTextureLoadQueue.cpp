@@ -135,8 +135,9 @@ int ProgressiveTextureLoadQueue::getNumBusy(){
 
 void ProgressiveTextureLoadQueue::draw(int x, int y){
 
-	string msg = "ProgressiveTextureLoadQueue max(" + ofToString(numSimlutaneousLoads) + 
-	")\nTotal Loaded: " + ofToString(ofxProgressiveTextureLoad::getNumMbLoaded()) + "MB"+
+	string msg = "ProgressiveTextureLoadQueue (" + ofToString(ofxProgressiveTextureLoad::getNumInstances()) +
+	"/"+ ofToString(numSimlutaneousLoads) + 
+	")\nTotal Loaded: " + ofToString(ofxProgressiveTextureLoad::getNumMbLoaded(),1) + "MB"+
 	"\nPending: " + ofToString(pending.size());
 
 	for(int i = 0 ; i < current.size(); i++){
