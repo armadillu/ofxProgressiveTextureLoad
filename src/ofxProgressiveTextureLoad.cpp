@@ -343,9 +343,11 @@ void ofxProgressiveTextureLoad::update(){
 		ev.who = this;
 		ev.tex = texture;
 		if(ev.loaded){
-			numMbLoaded += ev.tex->getWidth() * ev.tex->getHeight() * config.numBytesPerPix / float(1024 * 1024);
+			float thisTex = ev.tex->getWidth() * ev.tex->getHeight() * config.numBytesPerPix / float(1024 * 1024);
+			if(createMipMaps) thisTex *= 1.33;
+			numMbLoaded += thisTex;
 		}
-		if(createMipMaps) numMbLoaded *= 1.33;
+
 		ev.elapsedTime = ofGetElapsedTimef() - startTime;
 		ev.texturePath = imagePath;
 		ofNotifyEvent(textureReady, ev, this);
