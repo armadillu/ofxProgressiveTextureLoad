@@ -77,16 +77,17 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 
 void ofxProgressiveTextureLoad::threadedFunction(){
 
-	getPocoThread().setName("ofxProgressiveTextureLoad " + ofToString(ID));
-	getPocoThread().setOSPriority(Poco::Thread::getMinOSPriority());
-
-	if(cancelAsap){
-		pendingNotification = true;
-		stopThread();
-		setState(IDLE);
-	}
+	try{
+		getPocoThread().setName("ofxProgressiveTextureLoad " + ofToString(ID));
+		getPocoThread().setOSPriority(Poco::Thread::getMinOSPriority());
+	}catch(...){}
 
 	while(isThreadRunning()){
+		if(cancelAsap){
+			setState(IDLE);
+			pendingNotification = true;
+			return;
+		}
 		switch (state) {
 
 			case LOADING_PIXELS:{
@@ -94,7 +95,7 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 				try{
 					originalImage.setUseTexture(false);
 					bool ok = originalImage.loadImage(imagePath);
-					if (!ok){						
+					if (!ok){
 						ofLogError() << "ofxProgressiveTextureLoad: img loading failed! " << imagePath;
 						stopThread();
 						setState(LOADING_FAILED);
@@ -135,12 +136,12 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 					ofLogError() << "ofxProgressiveTextureLoad: img resizing failed! " << imagePath;
 					stopThread();
 					setState(LOADING_FAILED); //mm TODO!
-					break;
+					return;
 				}
 				TS_STOP_NIF("resizeImageForMipMaps " + ofToString(ID));
 				stopThread();
 				setState(ALLOC_TEXTURE);
-				break;
+				return;
 		}
 	}
 }
