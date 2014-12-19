@@ -96,6 +96,7 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 						setState(LOADING_FAILED);
 						ofLogError() << "ofxProgressiveTextureLoad: img loading failed! " << imagePath;
 						stopThread();
+						return;
 					}else{
 						TS_STOP_NIF("loadPix " + ofToString(ID));
 						switch (originalImage.getPixelsRef().getImageType()) {
