@@ -36,6 +36,7 @@ ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 	numInstances++;
 	isSetup = false;
 	cancelAsap = false;
+	readyForDeletion = false;
 }
 
 ofxProgressiveTextureLoad::~ofxProgressiveTextureLoad(){
@@ -81,23 +82,22 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 
 	if(cancelAsap){
 		pendingNotification = true;
-		state = IDLE;
-		return;
+		stopThread();
+		setState(IDLE);
 	}
+
 	while(isThreadRunning()){
 		switch (state) {
 
 			case LOADING_PIXELS:{
-				
 				TS_START_NIF("loadPix " + ofToString(ID));
 				try{
 					originalImage.setUseTexture(false);
 					bool ok = originalImage.loadImage(imagePath);
-					if (!ok){
-						setState(LOADING_FAILED);
+					if (!ok){						
 						ofLogError() << "ofxProgressiveTextureLoad: img loading failed! " << imagePath;
 						stopThread();
-						return;
+						setState(LOADING_FAILED);
 					}else{
 						TS_STOP_NIF("loadPix " + ofToString(ID));
 						switch (originalImage.getPixelsRef().getImageType()) {
@@ -121,9 +121,9 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 					}
 				}catch(...){
 					TS_STOP_NIF("loadPix " + ofToString(ID));
-					setState(LOADING_FAILED);
 					ofLogError() << "exception in ofxProgressiveTextureLoad::threadedFunction()";
 					stopThread();
+					setState(LOADING_FAILED);
 				}
 				}break;
 
@@ -132,14 +132,14 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 				try{
 					resizeImageForMipMaps();
 				}catch(...){
-					setState(LOADING_FAILED); //mm TODO!
 					ofLogError() << "ofxProgressiveTextureLoad: img resizing failed! " << imagePath;
 					stopThread();
+					setState(LOADING_FAILED); //mm TODO!
 					break;
 				}
-				setState(ALLOC_TEXTURE);
 				TS_STOP_NIF("resizeImageForMipMaps " + ofToString(ID));
-				return;
+				stopThread();
+				setState(ALLOC_TEXTURE);
 				break;
 		}
 	}
@@ -217,17 +217,21 @@ bool ofxProgressiveTextureLoad::isReadyToDrawWhileLoading(){
 	return false;
 }
 
+void ofxProgressiveTextureLoad::setState(State newState){
+	state = newState;
+	if(state == LOADING_FAILED){
+		pendingNotification = true;
+	}
+}
+
 void ofxProgressiveTextureLoad::update(){
+
+	if(readyForDeletion) return;
+	bool willBeReadyForDeletion = false;
 
 	TS_START_ACC("ProgTexLoad u");
 
-	//if(cancelAsap) cancelAsapDelay += 0.016;
-
 	switch (state) {
-
-		case LOADING_FAILED:{
-			pendingNotification = true;
-		}break;
 
 		case ALLOC_TEXTURE:{
 			texture->clear();
@@ -366,10 +370,12 @@ void ofxProgressiveTextureLoad::update(){
 		ev.elapsedTime = ofGetElapsedTimef() - startTime;
 		ev.texturePath = imagePath;
 		ofNotifyEvent(textureReady, ev, this);
-		setState(IDLE);
 		if(OFX_PROG_TEX_LOADER_MEAURE_TIMINGS) TS_STOP_NIF("total tex load time " + ofToString(ID));
+		setState(IDLE);
+		willBeReadyForDeletion = true;
 	}
 	TS_STOP_ACC("ProgTexLoad u");
+	if(willBeReadyForDeletion) readyForDeletion = true;
 }
 
 void ofxProgressiveTextureLoad::wrapUp(){
@@ -460,6 +466,8 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 
 
 void ofxProgressiveTextureLoad::draw(int x, int y, bool debugImages){
+
+	if(readyForDeletion) return;
 
 	if(texture && debugImages){
 		if(isReadyToDrawWhileLoading() || state == IDLE ){

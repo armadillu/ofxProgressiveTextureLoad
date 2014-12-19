@@ -52,7 +52,7 @@ public:
 
 	float getTimeSpentLastFrame(){ return lastFrameTime;} //in ms!
 	void setVerbose(bool v){verbose = v;}
-	bool isBusy(){return state != IDLE;}
+	bool isBusy(){return !readyForDeletion;}
 	bool isUploadingTextures(){return state == LOADING_TEX || state == LOADING_MIP_MAPS || state == ALLOC_TEXTURE; }
 	
 	string getStateString();
@@ -152,7 +152,7 @@ private:
 	void resizeImageForMipMaps();
 	bool progressiveTextureUpload(int mipmapLevel, uint64_t & currentTime);
 
-	void setState(State newState){state = newState;}
+	void setState(State newState);
 
 	ofPoint getMipMap0ImageSize();
 
@@ -160,6 +160,7 @@ private:
 	static int			numInstancesCreated;
 	static int			numInstances;
 	static float		numMbLoaded;
+	bool				readyForDeletion;
 
 
 };
