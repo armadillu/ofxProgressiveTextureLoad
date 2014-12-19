@@ -55,6 +55,9 @@ void testApp::setup(){
 
 
 void testApp::update(){
+	
+	progressiveTextureLoader.update();
+
 	if(progressiveTextureLoader.isBusy()){
 		plot->update(progressiveTextureLoader.getTimeSpentLastFrame());
 	}
@@ -67,7 +70,7 @@ void testApp::textureDrawable(ofxProgressiveTextureLoad::textureEvent& arg){
 }
 
 void testApp::textureReady(ofxProgressiveTextureLoad::textureEvent& arg){
-	if (arg.loaded){
+	if (arg.ok){
 		ofLogNotice() << "textureReady!";
 		TIME_SAMPLE_STOP_NOIF("Total Load Time");
 		textureReadyToDraw = true;

@@ -46,7 +46,11 @@ void testApp::setup(){
 }
 
 
-void testApp::update(){}
+void testApp::update(){
+
+	ProgressiveTextureLoadQueue::instance()->update();
+
+}
 
 
 void testApp::textureDrawable(ofxProgressiveTextureLoad::textureEvent& arg){
@@ -55,7 +59,7 @@ void testApp::textureDrawable(ofxProgressiveTextureLoad::textureEvent& arg){
 
 
 void testApp::textureReady(ofxProgressiveTextureLoad::textureEvent& arg){
-	if (arg.loaded){
+	if (arg.ok){
 		//ofLogNotice() << "textureReady!";
 		ready[arg.tex] = true;
 	}else{
