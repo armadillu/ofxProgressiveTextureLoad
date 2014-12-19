@@ -351,7 +351,7 @@ void ofxProgressiveTextureLoad::update(){
 			if(state == LOADING_FAILED)
 				ev.ok = false;
 			else
-				ev.ok == cancelAsap;
+				ev.ok = cancelAsap;
 			ev.fullyLoaded = false;
 			ev.readyToDraw = false;
 		}else{
