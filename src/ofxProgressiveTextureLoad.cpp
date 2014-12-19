@@ -77,6 +77,7 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 void ofxProgressiveTextureLoad::threadedFunction(){
 
 	getPocoThread().setName("ofxProgressiveTextureLoad " + ofToString(ID));
+	getPocoThread().setOSPriority(Poco::Thread::getMinOSPriority());
 
 	if(cancelAsap){
 		pendingNotification = true;
