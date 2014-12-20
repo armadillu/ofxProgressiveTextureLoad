@@ -389,7 +389,9 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 	GLuint glFormat = config.glFormat;
 	GLuint glPixelType = GL_UNSIGNED_BYTE;
 
-	texture->bind();
+	glEnable(texture->texData.textureTarget);
+	glBindTexture(texture->texData.textureTarget, texture->texData.textureID);
+	//texture->bind();
 	int numC = ofGetNumChannelsFromGLFormat(glFormat);
 	timer.getMicrosSinceLastCall();
 
@@ -445,10 +447,10 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 		if(verbose) cout << "loop " << loops << " loaded " << numLinesToLoadThisLoop << " lines and took " << timeThisLoop / 1000.0f << " ms" << endl;
 		loops++;
 	}
-	//if we finshed this mipmap but there's time left, we could go on...
-	bool canGoOn = false;
+	//if we finished this mipmap but there's time left, we could go on...
+	bool couldGoOn = false;
 	if(currentTime < maxTimeTakenPerFrame * 1000.0f){
-		canGoOn = true;
+		couldGoOn = true;
 	}
 
 	if(verbose) cout << "mipmapLevel " << mipmapLevel << " spent " << currentTime / 1000.0f << " ms and loaded " << scanlinesLoadedThisFrame << " lines across "<< loops << " loops" << endl;
@@ -460,9 +462,10 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 		loadedScanLinesSoFar = 0;
 	}
 
-	texture->unbind();
+	//texture->unbind();
 	glDisable(texture->texData.textureTarget);
-	return canGoOn;
+	glBindTexture(texture->texData.textureTarget, 0);
+	return couldGoOn;
 }
 
 
