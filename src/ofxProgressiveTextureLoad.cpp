@@ -9,13 +9,6 @@
 #include "ofxProgressiveTextureLoad.h"
 #include <math.h>
 
-#if(!DEBUG_TEX_LOADER_TIMES) //override TS_* if not debugging tex loader times
-#undef TS_START_NIF
-#undef TS_STOP_NIF
-#define TS_START_NIF(x) ;
-#define TS_STOP_NIF(x)	;
-#endif
-
 
 int ofxProgressiveTextureLoad::numInstancesCreated = 0;
 int ofxProgressiveTextureLoad::numInstances = 0;
@@ -68,7 +61,9 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 		setState(LOADING_PIXELS);
 		startThread();
 		//ofAddListener(ofEvents().update, this, &ofxProgressiveTextureLoad::update);
-		if(OFX_PROG_TEX_LOADER_MEAURE_TIMINGS) TS_START_NIF("total tex load time " + ofToString(ID));
+		#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
+			TS_START_NIF("total tex load time " + ofToString(ID));
+		#endif
 	}else{
 		ofLogError() << "cant load texture, busy!";
 	}
@@ -91,7 +86,9 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 		switch (state) {
 
 			case LOADING_PIXELS:{
+				#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
 				TS_START_NIF("loadPix " + ofToString(ID));
+				#endif
 				try{
 					originalImage.setUseTexture(false);
 					bool ok = originalImage.loadImage(imagePath);
@@ -100,7 +97,9 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 						stopThread();
 						setState(LOADING_FAILED);
 					}else{
+						#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
 						TS_STOP_NIF("loadPix " + ofToString(ID));
+						#endif
 						switch (originalImage.getPixelsRef().getImageType()) {
 							case OF_IMAGE_COLOR:
 								config.glFormat = GL_RGB;
@@ -121,7 +120,9 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 						setState(RESIZING_FOR_MIPMAPS);
 					}
 				}catch(...){
+					#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
 					TS_STOP_NIF("loadPix " + ofToString(ID));
+					#endif
 					ofLogError() << "exception in ofxProgressiveTextureLoad::threadedFunction()";
 					stopThread();
 					setState(LOADING_FAILED);
@@ -129,7 +130,9 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 				}break;
 
 			case RESIZING_FOR_MIPMAPS:
+				#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
 				TS_START_NIF("resizeImageForMipMaps " + ofToString(ID));
+				#endif
 				try{
 					resizeImageForMipMaps();
 				}catch(...){
@@ -138,7 +141,9 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 					setState(LOADING_FAILED); //mm TODO!
 					return;
 				}
+				#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
 				TS_STOP_NIF("resizeImageForMipMaps " + ofToString(ID));
+				#endif
 				stopThread();
 				setState(ALLOC_TEXTURE);
 				return;
@@ -230,7 +235,9 @@ void ofxProgressiveTextureLoad::update(){
 	if(readyForDeletion) return;
 	bool willBeReadyForDeletion = false;
 
+	#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
 	TS_START_ACC("ProgTexLoad u");
+	#endif
 
 	switch (state) {
 
@@ -268,7 +275,9 @@ void ofxProgressiveTextureLoad::update(){
 				currentMipMapLevel = mipMapLevelPixels.size() - 1; //start by loading the smallest image (deepest mipmap)
 				setState(LOADING_MIP_MAPS);
 				mipMapLevelAllocPending = true; //otherwise we dont alloc space for the 1st mipmap level, and we get GL_INVALID_OPERATION
+				#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
 				TS_START_NIF("upload mipmaps " + ofToString(ID));
+				#endif
 			}else{
 				currentMipMapLevel = 0;
 				setState(LOADING_TEX);
@@ -330,7 +339,9 @@ void ofxProgressiveTextureLoad::update(){
 						if (currentMipMapLevel == 0){ //all mipmaps loaded! done!
 							wrappingUp = true;
 							wrapUp();
+							#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
 							TS_STOP_NIF("upload mipmaps " + ofToString(ID));
+							#endif
 							setState(IDLE);
 						}else{
 							currentMipMapLevel--;
@@ -371,11 +382,15 @@ void ofxProgressiveTextureLoad::update(){
 		ev.elapsedTime = ofGetElapsedTimef() - startTime;
 		ev.texturePath = imagePath;
 		ofNotifyEvent(textureReady, ev, this);
-		if(OFX_PROG_TEX_LOADER_MEAURE_TIMINGS) TS_STOP_NIF("total tex load time " + ofToString(ID));
+		#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
+		TS_STOP_NIF("total tex load time " + ofToString(ID));
+		#endif
 		setState(IDLE);
 		willBeReadyForDeletion = true;
 	}
+	#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
 	TS_STOP_ACC("ProgTexLoad u");
+	#endif
 	if(willBeReadyForDeletion) readyForDeletion = true;
 }
 
@@ -399,7 +414,7 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 	int scanlinesLoadedThisFrame = 0;
 	int loops = 0;
 
-	#if (OF_VERSION_PATCH <= 3)
+	#if (OF_VERSION_PATCH <= 4)
 		ofSetPixelStorei(pix->getWidth(), 1, ofGetNumChannelsFromGLFormat(glFormat));
 	#else
 		ofSetPixelStoreiAlignment(GL_PACK_ALIGNMENT, pix->getWidth(), 1, ofGetNumChannelsFromGLFormat(glFormat));
@@ -555,7 +570,3 @@ string ofxProgressiveTextureLoad::getStateString(){
 	}
 }
 
-#if(DEBUG_TEX_LOADER_TIMES) //override TS_* if not debugging tex loader times
-#define TS_START_NIF(x) TIME_SAMPLE_START_NOIF(x, ##__VA_ARGS__);
-#define TS_STOP_NIF(x)	TIME_SAMPLE_STOP_NOIF(x, ##__VA_ARGS__);
-#endif

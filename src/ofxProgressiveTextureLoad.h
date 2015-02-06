@@ -13,12 +13,9 @@
 #include "ofxMSATimer.h"
 #include "ofxOpenCv.h"
 
-//define OFX_PROG_TEX_LOADER_MEAURE_TIMINGS as FALSE to not measure timings with ofxTimeMeasurements
-#define OFX_PROG_TEX_LOADER_MEAURE_TIMINGS	TRUE
-#define DEBUG_TEX_LOADER_TIMES				FALSE /*requires timings and ofxTimeMeasurements*/
-													/*very verbose timings if true*/
+//define OFX_PROG_TEX_LOADER_MEAURE_TIMINGS in your preProcessor macros to measure timings with ofxTimeMeasurements
 
-#if(OFX_PROG_TEX_LOADER_MEAURE_TIMINGS)
+#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
 	#include "ofxTimeMeasurements.h"
 #endif
 
