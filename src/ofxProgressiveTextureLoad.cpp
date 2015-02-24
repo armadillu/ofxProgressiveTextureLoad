@@ -150,7 +150,6 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 	}
 }
 
-
 void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 
 	int numC = config.numBytesPerPix;
@@ -161,14 +160,7 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 
 	//fill in an opencv image
 	cv::Mat mipMap0(originalImage.getHeight(), originalImage.getWidth(), config.opencvFormat);
-//		int wstep = mipMap0.step1(0);
-//		if( mipMap0.cols * mipMap0.channels() == wstep ){
 	memcpy( mipMap0.data,  originalImage.getPixels(), originalImage.getWidth() * originalImage.getHeight() * numC);
-//		}else{
-//			for( int i=0; i < originalImage.height; i++ ) {
-//				memcpy( mipMap0.data + (i * wstep), originalImage.getPixels() + (i * originalImage.width * numC), originalImage.width * numC );
-//			}
-//		}
 
 	if (createMipMaps || (!createMipMaps && ofGetUsingArbTex() == false) ){
 		//resize to next power of two
