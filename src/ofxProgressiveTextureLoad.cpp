@@ -160,7 +160,7 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 	int mipMapLevel = floor(log( MAX(newW, newH) ) / log( 2 )) + 1; //THIS IS KEY! you need to do all mipmap levels or it will draw blank tex!
 
 	//fill in an opencv image
-	cv::Mat mipMap0(originalImage.getWidth(), originalImage.getHeight(), config.opencvFormat);
+	cv::Mat mipMap0(originalImage.getHeight(), originalImage.getWidth(), config.opencvFormat);
 //		int wstep = mipMap0.step1(0);
 //		if( mipMap0.cols * mipMap0.channels() == wstep ){
 	memcpy( mipMap0.data,  originalImage.getPixels(), originalImage.getWidth() * originalImage.getHeight() * numC);
