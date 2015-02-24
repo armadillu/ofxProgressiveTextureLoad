@@ -90,8 +90,7 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 				TS_START_NIF("loadPix " + ofToString(ID));
 				#endif
 				try{
-					originalImage.setUseTexture(false);
-					bool ok = originalImage.loadImage(imagePath);
+					bool ok = ofLoadImage(originalImage, imagePath);
 					if (!ok){
 						ofLogError() << "ofxProgressiveTextureLoad: img loading failed! " << imagePath;
 						stopThread();
@@ -100,7 +99,7 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 						#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
 						TS_STOP_NIF("loadPix " + ofToString(ID));
 						#endif
-						switch (originalImage.getPixelsRef().getImageType()) {
+						switch (originalImage.getImageType()) {
 							case OF_IMAGE_COLOR:
 								config.glFormat = GL_RGB;
 								config.numBytesPerPix = 3;
@@ -161,10 +160,10 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 	int mipMapLevel = floor(log( MAX(newW, newH) ) / log( 2 )) + 1; //THIS IS KEY! you need to do all mipmap levels or it will draw blank tex!
 
 	//fill in an opencv image
-	cv::Mat mipMap0(originalImage.height, originalImage.width, config.opencvFormat);
+	cv::Mat mipMap0(originalImage.getWidth(), originalImage.getHeight(), config.opencvFormat);
 //		int wstep = mipMap0.step1(0);
 //		if( mipMap0.cols * mipMap0.channels() == wstep ){
-	memcpy( mipMap0.data,  originalImage.getPixels(), originalImage.width * originalImage.height * numC);
+	memcpy( mipMap0.data,  originalImage.getPixels(), originalImage.getWidth() * originalImage.getHeight() * numC);
 //		}else{
 //			for( int i=0; i < originalImage.height; i++ ) {
 //				memcpy( mipMap0.data + (i * wstep), originalImage.getPixels() + (i * originalImage.width * numC), originalImage.width * numC );
@@ -206,11 +205,11 @@ ofPoint ofxProgressiveTextureLoad::getMipMap0ImageSize(){
 	int newW;
 	int newH;
 	if (createMipMaps || (!createMipMaps && !ofGetUsingArbTex()) ){
-		newW = ofNextPow2(originalImage.width);
-		newH = ofNextPow2(originalImage.height);
+		newW = ofNextPow2(originalImage.getWidth());
+		newH = ofNextPow2(originalImage.getHeight());
 	}else{
-		newW = originalImage.width;
-		newH = originalImage.height;
+		newW = originalImage.getWidth();
+		newH = originalImage.getHeight();
 	}
 	return ofPoint(newW, newH);
 }
@@ -247,27 +246,26 @@ void ofxProgressiveTextureLoad::update(){
 			int newW = targetSize.x;
 			int newH = targetSize.y;
 
-			ofPixels & pix = originalImage.getPixelsRef();
 			texture->allocate(newW, newH,
-							  ofGetGlInternalFormat(pix),
+							  ofGetGlInternalFormat(originalImage),
 							  createMipMaps ? false : ofGetUsingArbTex(), //arb! no arb when creating mipmaps
-							  ofGetGlFormat(pix),
-							  ofGetGlType(pix)
+							  ofGetGlFormat(originalImage),
+							  ofGetGlType(originalImage)
 							  );
 
 			notifiedReadyToDraw = false;
 			//setup OF texture sizes!
 			if(texture->texData.textureTarget == GL_TEXTURE_RECTANGLE_ARB){
-				texture->texData.tex_t = pix.getWidth();
-				texture->texData.tex_u = pix.getHeight();
+				texture->texData.tex_t = originalImage.getWidth();
+				texture->texData.tex_u = originalImage.getHeight();
 			}else{
 				texture->texData.tex_t = 1;
 				texture->texData.tex_u = 1;
 			}
-			texture->texData.tex_w = pix.getWidth();
-			texture->texData.tex_h = pix.getHeight();
-			texture->texData.width = pix.getWidth();
-			texture->texData.height = pix.getHeight();
+			texture->texData.tex_w = originalImage.getWidth();
+			texture->texData.tex_h = originalImage.getHeight();
+			texture->texData.width = originalImage.getWidth();
+			texture->texData.height = originalImage.getHeight();
 
 			originalImage.clear(); //dealloc original image, we have all the ofPixels in a map!
 			mipMapLevelLoaded = false;

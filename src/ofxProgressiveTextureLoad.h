@@ -107,7 +107,7 @@ private:
 
 
 	State 				state;
-	ofImage 			originalImage;
+	ofPixels 			originalImage;
 	dataTypeConfig		config;
 	ofTexture			*texture;
 
