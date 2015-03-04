@@ -29,7 +29,6 @@ ProgressiveTextureLoadQueue::ProgressiveTextureLoadQueue(){
 	texLodBias = -0.5;
 	maxRequestsPerFrame = 10;
 	maxSimlutaneousThreads = 2;
-	maxSimultaneousTexUploads = 10;
 	ids = 0;
 	verbose = false;
 
@@ -63,11 +62,6 @@ ofxProgressiveTextureLoad* ProgressiveTextureLoadQueue::loadTexture(string path,
 void ProgressiveTextureLoadQueue::setMaxThreads(int numThreads){
 	maxSimlutaneousThreads = numThreads;
 	if(maxSimlutaneousThreads < 1) maxSimlutaneousThreads = 1; //save dumb developers from themselves
-}
-
-void ProgressiveTextureLoadQueue::setMaxSimultaneousLoadingTextures(int maxNumTex){
-	maxSimultaneousTexUploads = maxNumTex;
-	if(maxSimultaneousTexUploads < 1) maxSimultaneousTexUploads = 1; //save dumb developers from themselves
 }
 
 void ProgressiveTextureLoadQueue::setNumberSimultaneousLoads(int numThreads){
@@ -120,25 +114,12 @@ void ProgressiveTextureLoadQueue::update(){
 	//is there stuff to do?
 	int c = 0;
 
-	//lets see how many of those jobs are actually running in a thread
-	int numThreads = 0;
-	for(int i = 0; i < current.size(); i++){
-		if(current[i].loader){
-			if(current[i].loader->isDoingWorkInThread()){
-				numThreads ++;
-			}
-		}
-	}
-	int numLoadingTex = current.size() - numThreads; //by exclusion
-
-	while(pending.size() && numThreads < maxSimlutaneousThreads &&
-		  c < maxRequestsPerFrame && numLoadingTex < maxSimultaneousTexUploads){
+	while(pending.size() && current.size() < maxSimlutaneousThreads && c < maxRequestsPerFrame ){
 		current.push_back(pending[0]);
 		pending.erase(pending.begin());
 		int indx = current.size()-1;
 		current[indx].loader->loadTexture(current[indx].path, current[indx].withMipMaps);
 		c++;
-		numThreads++;
 	}
 }
 
