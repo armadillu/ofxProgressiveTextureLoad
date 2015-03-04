@@ -53,13 +53,14 @@ public:
 	bool isUploadingTextures(){return state == LOADING_TEX || state == LOADING_MIP_MAPS || state == ALLOC_TEXTURE; }
 	
 	string getStateString();
+	bool isDoingWorkInThread();
 
 	void stopLoadingAsap(); //TODO! will get back to idle, tex remains as it is
 							//(caller is responisble to clear the tex)
 
 	void draw(int, int, bool debugImages = false); //for debug purposes!
 
-	struct textureEvent{
+	struct ProgressiveTextureLoadEvent{
 		bool							ok; //used to be "loaded"
 											//a load cancelled tex will return an "ok" in the event !
 
@@ -72,16 +73,16 @@ public:
 		string							texturePath;
 		float 							elapsedTime;
 
-		textureEvent(){
+		ProgressiveTextureLoadEvent(){
 			ok = true;
 			canceledLoad = false;
 			who = NULL;
 		}
 	};
 
-	ofEvent<textureEvent>	textureReady; //will notify when texture is fully loaded, or failed to load
-	ofEvent<textureEvent>	textureDrawable; //will notfy when texture is drawable,
-											//it will   begind drawing in low res, and progressivelly improve!
+	ofEvent<ProgressiveTextureLoadEvent>	textureReady; //will notify when texture is fully loaded, or failed to load
+	ofEvent<ProgressiveTextureLoadEvent>	textureDrawable; //will notfy when texture is drawable,
+											//it will begin drawing in low res, and progressivelly improve!
 	
 	static int getNumInstancesCreated(){return numInstancesCreated;}
 	static int getNumInstances(){return numInstances;}
@@ -107,11 +108,11 @@ private:
 
 
 	State 				state;
-	ofPixels 			originalImage;
+	ofPixels 			imagePixels;
 	dataTypeConfig		config;
 	ofTexture			*texture;
 
-	ofxMSATimer			timer;
+	ofxMSATimer			timer; //TODO drop this in OF 0.9, timings will be more accurate in windows
 
 	// speed params
 	int 				numLinesPerLoop; //we can increase that to reduce overhead

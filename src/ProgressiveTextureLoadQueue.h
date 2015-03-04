@@ -38,12 +38,19 @@ public:
 	//how much time do you want ofxProgressiveTextureLoad to spend uploading data to the gpu per frame
 	void setTargetTimePerFrame(float ms);
 
+	//how much of the queue can we dispatch per frame
+	void setMaximumRequestsPerFrame(int max){maxRequestsPerFrame = max;};
+
+	//how many textures to load at the same time! (threads)
+	OF_DEPRECATED_MSG("Use setMaxThreads() instead.", void setNumberSimultaneousLoads(int numThreads) );
+	void setMaxThreads(int numThreads);
+
+	void setMaxSimultaneousLoadingTextures(int maxNumTex);
+
 	//in mipmap levels. used to tweak which mipmap to use; helps make mipmaps sharper or blurrier.
 	//0 is neutral; negative is lower mipmaps (sharper), positive is higher mipmaps (blurrier)
 	void setTexLodBias(float bias){texLodBias = bias;}
 
-	//how many textures to load at the same time!
-	void setNumberSimultaneousLoads(int numThreads);
 
 	//set debug print logging
 	void setVerbose(bool v){verbose = v;}
@@ -71,12 +78,15 @@ private:
 
 	vector<LoadRequest> 					pending;
 	vector<LoadRequest>						current;
-	int numSimlutaneousLoads;
+
 
 	// params //
 
+	int 				maxSimlutaneousThreads;
+	int					maxSimultaneousTexUploads;
 	int 				numLinesPerLoop; //we can increase that to reduce overhead
 	float 				maxTimeTakenPerFrame; //ms to spend loading tex data on a single frame
+	int					maxRequestsPerFrame;
 	float				texLodBias;
 	int					ids;
 	bool				verbose;

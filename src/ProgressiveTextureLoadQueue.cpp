@@ -27,7 +27,9 @@ ProgressiveTextureLoadQueue::ProgressiveTextureLoadQueue(){
 	numLinesPerLoop = 16;
 	maxTimeTakenPerFrame = 1.0; //ms
 	texLodBias = -0.5;
-	numSimlutaneousLoads = 2;
+	maxRequestsPerFrame = 10;
+	maxSimlutaneousThreads = 2;
+	maxSimultaneousTexUploads = 10;
 	ids = 0;
 	verbose = false;
 
@@ -58,9 +60,18 @@ ofxProgressiveTextureLoad* ProgressiveTextureLoadQueue::loadTexture(string path,
 	return r.loader;
 }
 
+void ProgressiveTextureLoadQueue::setMaxThreads(int numThreads){
+	maxSimlutaneousThreads = numThreads;
+	if(maxSimlutaneousThreads < 1) maxSimlutaneousThreads = 1; //save dumb developers from themselves
+}
+
+void ProgressiveTextureLoadQueue::setMaxSimultaneousLoadingTextures(int maxNumTex){
+	maxSimultaneousTexUploads = maxNumTex;
+	if(maxSimultaneousTexUploads < 1) maxSimultaneousTexUploads = 1; //save dumb developers from themselves
+}
+
 void ProgressiveTextureLoadQueue::setNumberSimultaneousLoads(int numThreads){
-	numSimlutaneousLoads = numThreads;
-	if(numSimlutaneousLoads < 1) numSimlutaneousLoads = 1; //save dumb developers from themselves
+	setMaxThreads(numThreads);
 }
 
 void ProgressiveTextureLoadQueue::setScanlinesPerLoop(int numLines){
@@ -103,21 +114,31 @@ void ProgressiveTextureLoadQueue::update(){
 	//dealloc and remove from current all the finished ones
 	for(int i = toDelete.size()-1; i >= 0 ; i--){
 		delete current[toDelete[i]].loader;
-		//ofLogNotice() << "delete loader " << current[toDelete[i]].ID;
 		current.erase(current.begin() + toDelete[i]);
 	}
 
 	//is there stuff to do?
-
-	int maxPerFrame = 5;
 	int c = 0;
-	while(pending.size() && current.size() < numSimlutaneousLoads && c < maxPerFrame){
+
+	//lets see how many of those jobs are actually running in a thread
+	int numThreads = 0;
+	for(int i = 0; i < current.size(); i++){
+		if(current[i].loader){
+			if(current[i].loader->isDoingWorkInThread()){
+				numThreads ++;
+			}
+		}
+	}
+	int numLoadingTex = current.size() - numThreads; //by exclusion
+
+	while(pending.size() && numThreads < maxSimlutaneousThreads &&
+		  c < maxRequestsPerFrame && numLoadingTex < maxSimultaneousTexUploads){
 		current.push_back(pending[0]);
 		pending.erase(pending.begin());
 		int indx = current.size()-1;
 		current[indx].loader->loadTexture(current[indx].path, current[indx].withMipMaps);
-		//ofLogNotice() << "load texture " << current[indx].ID;
 		c++;
+		numThreads++;
 	}
 }
 
@@ -136,12 +157,12 @@ int ProgressiveTextureLoadQueue::getNumBusy(){
 void ProgressiveTextureLoadQueue::draw(int x, int y){
 
 	string msg = "ProgressiveTextureLoadQueue (" + ofToString(ofxProgressiveTextureLoad::getNumInstances()) +
-	"/"+ ofToString(numSimlutaneousLoads) + 
+	"/"+ ofToString(maxSimlutaneousThreads) + 
 	")\nTotal Loaded: " + ofToString(ofxProgressiveTextureLoad::getNumMbLoaded(),1) + "MB"+
 	"\nPending: " + ofToString(pending.size());
 
 	for(int i = 0 ; i < current.size(); i++){
-		msg += "\n  Loader " + ofToString(i) + ": " + current[i].loader->getStateString();
+		msg += "\n  " + ofToString(i) + ": " + current[i].loader->getStateString();
 	}
 	ofDrawBitmapStringHighlight(msg, x, y);
 }
