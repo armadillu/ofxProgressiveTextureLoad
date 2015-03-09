@@ -35,24 +35,35 @@ ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 ofxProgressiveTextureLoad::~ofxProgressiveTextureLoad(){
 	//delete all mipmap pixels
 	if(mipMapLevelPixels.size()){
-		for(int i = 0; i < mipMapLevelPixels.size(); i++){
-			delete mipMapLevelPixels[i];
+		if(useARB){
+			//dont do anything, we never allocated new pixels!
+		}else{
+			for(int i = 0; i < mipMapLevelPixels.size(); i++){
+				delete mipMapLevelPixels[i];
+			}
 		}
 		mipMapLevelPixels.clear();
 	}
 	numInstances--;
 }
 
-void ofxProgressiveTextureLoad::setup(ofTexture* tex, int resizeQuality_){
+void ofxProgressiveTextureLoad::setup(ofTexture* tex, int resizeQuality_, bool useARB_){
 
 	resizeQuality = resizeQuality_;
 	texture = tex;
 	isSetup = true;
+	useARB = useARB_;
 }
 
 void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 
 	if (state == IDLE && texture){
+
+		if (useARB && withMipMaps){
+			ofLogError("ofxProgressiveTextureLoad") << "You can't create mipmaps on ARB textures. To create mipmaps disable ARB Textures with ofDisableArbTex();";
+			withMipMaps = false;
+		}
+
 		startTime = ofGetElapsedTimef();
 		createMipMaps = withMipMaps;
 		pendingNotification = false;
@@ -124,7 +135,14 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 								config.opencvFormat = CV_8UC1;
 								break;
 						}
-						setState(RESIZING_FOR_MIPMAPS);
+						if(useARB){
+							mipMapLevelPixels[0] = &imagePixels;
+							stopThread();
+							setState(ALLOC_TEXTURE);
+							return;
+						}else{
+							setState(RESIZING_FOR_MIPMAPS);
+						}
 					}
 				}catch(...){
 					#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
@@ -293,7 +311,9 @@ void ofxProgressiveTextureLoad::update(){
 			texture->texData.width = imagePixels.getWidth();
 			texture->texData.height = imagePixels.getHeight();
 
-			imagePixels.clear(); //dealloc original image, we have all the ofPixels in a map!
+			if(!useARB){
+				imagePixels.clear(); //dealloc original image, we have all the ofPixels in a map!
+			}
 			mipMapLevelLoaded = false;
 			if(createMipMaps){
 				currentMipMapLevel = mipMapLevelPixels.size() - 1; //start by loading the smallest image (deepest mipmap)
@@ -316,6 +336,7 @@ void ofxProgressiveTextureLoad::update(){
 				uint64_t currentTime = 0;
 				progressiveTextureUpload(currentMipMapLevel, currentTime);
 				if (mipMapLevelLoaded){
+					imagePixels.clear(); //dealloc original image, we finished loading!
 					texture->setTextureMinMagFilter(GL_LINEAR, GL_LINEAR);
 					wrapUp();
 				}

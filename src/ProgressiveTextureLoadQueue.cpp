@@ -31,8 +31,6 @@ ProgressiveTextureLoadQueue::ProgressiveTextureLoadQueue(){
 	maxSimlutaneousThreads = 2;
 	ids = 0;
 	verbose = false;
-
-	//ofAddListener(ofEvents().update, this, &ProgressiveTextureLoadQueue::update, OF_EVENT_ORDER_AFTER_APP);
 }
 
 
@@ -47,7 +45,7 @@ ofxProgressiveTextureLoad* ProgressiveTextureLoadQueue::loadTexture(string path,
 	r.loader->setScanlinesPerLoop(numLinesPerLoop);
 	r.loader->setTargetTimePerFrame(maxTimeTakenPerFrame);
 	r.loader->setTexLodBias(texLodBias);
-	r.loader->setup(tex, resizeQuality);
+	r.loader->setup(tex, resizeQuality, ofGetUsingArbTex());
 	r.ID = ids;
 	ids++;
 

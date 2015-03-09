@@ -28,7 +28,9 @@ public:
 	ofxProgressiveTextureLoad();
 	~ofxProgressiveTextureLoad();
 
-	void setup(ofTexture* tex, int resizeQuality = CV_INTER_CUBIC);
+	//if using ARB Textures, no resize is necessary!
+	//you cant create mipmaps if using ARB!
+	void setup(ofTexture* tex, int resizeQuality = CV_INTER_CUBIC, bool useARB = false);
 	void loadTexture(string path, bool withMipMaps);
 
 	void update();
@@ -39,7 +41,7 @@ public:
 	//add more overhead, but should lead to more accurate stop times.
 	void setScanlinesPerLoop(int numLines){numLinesPerLoop = numLines;}
 
-	//how much time do you want ofxProgressiveTextureLoad to spend uploading data to the gpu per frame
+	//how much time do you want ofxProgressiveTextureLoad to spend uploading data to the GPU per frame
 	void setTargetTimePerFrame(float ms){maxTimeTakenPerFrame = ms;}
 
 	//in mipmap levels. used to tweak which mipmap to use; helps make mipmaps sharper or blurrier.
@@ -56,13 +58,13 @@ public:
 	bool isDoingWorkInThread();
 
 	void stopLoadingAsap(); //TODO! will get back to idle, tex remains as it is
-							//(caller is responisble to clear the tex)
+							//(caller is responsible to clear the tex)
 
 	void draw(int, int, bool debugImages = false); //for debug purposes!
 
 	struct ProgressiveTextureLoadEvent{
 		bool							ok; //used to be "loaded"
-											//a load cancelled tex will return an "ok" in the event !
+											//a load canceled tex will return an "ok" in the event !
 
 		bool							fullyLoaded;
 		bool							readyToDraw;
@@ -125,6 +127,7 @@ private:
 
 	string				imagePath;
 	bool 				createMipMaps;
+	bool				useARB;
 	bool 				pendingNotification;
 
 	bool 				mipMapLevelLoaded;

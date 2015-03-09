@@ -19,10 +19,12 @@ public:
 	void update();
 
 
-	//its your responsability to add listeners to the returned object (ret)
+	//its your responsibility to add listeners to the returned object (ret)
 	//to get notified when the texture is fully/partially loaded with:
 	//ofAddListener(ret->textureReady, this, &testApp::textureReady);
 	//ofAddListener(ret->textureDrawable, this, &testApp::textureDrawable);
+	//be aware that this will look at ofGetUsingArbTex() to determine if the tex
+	//should be created in ARB mode or not
 	ofxProgressiveTextureLoad* loadTexture(string path, ofTexture* tex, bool createMipMaps,
 					 int resizeQuality = CV_INTER_CUBIC,
 					 bool highPriority = false);
