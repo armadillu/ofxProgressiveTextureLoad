@@ -455,12 +455,8 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 	ofPixels * pix = mipMapLevelPixels[mipmapLevel];
 	int scanlinesLoadedThisFrame = 0;
 	int loops = 0;
-
-	#if (OF_VERSION_PATCH <= 4) //mmmm....
-		ofSetPixelStorei(pix->getWidth(), 1, ofGetNumChannelsFromGLFormat(glFormat));
-	#else
-		ofSetPixelStoreiAlignment(GL_PACK_ALIGNMENT, pix->getWidth(), 1, ofGetNumChannelsFromGLFormat(glFormat));
-	#endif
+	
+	ofSetPixelStoreiAlignment(GL_PACK_ALIGNMENT, pix->getWidth(), 1, ofGetNumChannelsFromGLFormat(glFormat));
 
 	while (currentTime < maxTimeTakenPerFrame * 1000.0f && loadedScanLinesSoFar < pix->getHeight()) {
 
