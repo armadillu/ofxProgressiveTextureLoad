@@ -10,7 +10,6 @@
 #define __BaseApp__ofxProgressiveTextureLoad__
 
 #include "ofMain.h"
-#include "ofxMSATimer.h"
 #include "ofxOpenCv.h"
 
 //define OFX_PROG_TEX_LOADER_MEAURE_TIMINGS in your preProcessor macros to measure timings with ofxTimeMeasurements
@@ -114,7 +113,7 @@ private:
 	dataTypeConfig		config;
 	ofTexture			*texture;
 
-	ofxMSATimer			timer; //TODO drop this in OF 0.9, timings will be more accurate in windows
+	uint64_t			timer; //TODO drop this in OF 0.9, timings will be more accurate in windows
 
 	// speed params
 	int 				numLinesPerLoop; //we can increase that to reduce overhead

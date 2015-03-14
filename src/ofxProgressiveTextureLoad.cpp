@@ -451,7 +451,6 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 	glBindTexture(texture->texData.textureTarget, texture->texData.textureID);
 	//texture->bind();
 	int numC = ofGetNumChannelsFromGLFormat(glFormat);
-	timer.getMicrosSinceLastCall();
 
 	ofPixels * pix = mipMapLevelPixels[mipmapLevel];
 	int scanlinesLoadedThisFrame = 0;
@@ -465,6 +464,7 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 
 	while (currentTime < maxTimeTakenPerFrame * 1000.0f && loadedScanLinesSoFar < pix->getHeight()) {
 
+		uint64_t time = ofGetElapsedTimeMicros();
 		unsigned char * data = pix->getPixels() + numC * (int)pix->getWidth() * loadedScanLinesSoFar;
 
 		int numLinesToLoadThisLoop = pix->getHeight() - loadedScanLinesSoFar;
@@ -500,9 +500,9 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 
 		loadedScanLinesSoFar += numLinesToLoadThisLoop;
 		scanlinesLoadedThisFrame += numLinesToLoadThisLoop;
-		int timeThisLoop = timer.getMicrosSinceLastCall();
-		currentTime += timeThisLoop;
-		if(verbose) cout << "loop " << loops << " loaded " << numLinesToLoadThisLoop << " lines and took " << timeThisLoop / 1000.0f << " ms" << endl;
+		uint64_t thisTime = ofGetElapsedTimeMicros() - time;
+		currentTime += thisTime;
+		if(verbose) cout << "loop " << loops << " loaded " << numLinesToLoadThisLoop << " lines and took " << thisTime / 1000.0f << " ms" << endl;
 		loops++;
 	}
 	//if we finished this mipmap but there's time left, we could go on...
