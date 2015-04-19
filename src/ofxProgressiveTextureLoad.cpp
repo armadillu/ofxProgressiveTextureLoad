@@ -200,7 +200,7 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 	cv::Mat mipMap0(imagePixels.getHeight(), imagePixels.getWidth(), config.opencvFormat);
 	memcpy( mipMap0.data,  imagePixels.getPixels(), imagePixels.getWidth() * imagePixels.getHeight() * numC);
 
-	if (createMipMaps || (!createMipMaps && ofGetUsingArbTex() == false) ){
+	if (createMipMaps || (!createMipMaps && useARB == false) ){
 		//resize to next power of two
 		cv::resize(mipMap0, mipMap0, cv::Size(newW, newH), 0, 0, resizeQuality);
 	}
@@ -248,7 +248,7 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 ofPoint ofxProgressiveTextureLoad::getMipMap0ImageSize(){
 	int newW;
 	int newH;
-	if (createMipMaps || (!createMipMaps && !ofGetUsingArbTex()) ){
+	if (createMipMaps || (!createMipMaps && !useARB) ){
 		newW = ofNextPow2(imagePixels.getWidth());
 		newH = ofNextPow2(imagePixels.getHeight());
 	}else{
@@ -292,7 +292,7 @@ void ofxProgressiveTextureLoad::update(){
 
 			texture->allocate(newW, newH,
 							  ofGetGlInternalFormat(imagePixels),
-							  createMipMaps ? false : ofGetUsingArbTex(), //arb! no arb when creating mipmaps
+							  useARB, //arb! no arb when creating mipmaps
 							  ofGetGlFormat(imagePixels),
 							  ofGetGlType(imagePixels)
 							  );

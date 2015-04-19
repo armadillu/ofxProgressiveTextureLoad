@@ -16,20 +16,21 @@ class ProgressiveTextureLoadQueue{
 public:
 
 	static ProgressiveTextureLoadQueue* instance();
-	void update();
-
 
 	//its your responsibility to add listeners to the returned object (ret)
 	//to get notified when the texture is fully/partially loaded with:
 	//ofAddListener(ret->textureReady, this, &testApp::textureReady);
 	//ofAddListener(ret->textureDrawable, this, &testApp::textureDrawable);
-	//be aware that this will look at ofGetUsingArbTex() to determine if the tex
-	//should be created in ARB mode or not
-	ofxProgressiveTextureLoad* loadTexture(string path, ofTexture* tex, bool createMipMaps,
-					 int resizeQuality = CV_INTER_CUBIC,
-					 bool highPriority = false);
+	ofxProgressiveTextureLoad* loadTexture(string path,
+										   ofTexture* tex,
+										   bool createMipMaps,
+										   bool ARB,
+										   int resizeQuality,
+										   bool highPriority);
 
 	void draw(int x, int y);
+
+	void update( ofEventArgs & args ); //dont call it, it happens automatically!
 
 	//for each update() call (one frame), the addon will loop uploading texture regions
 	//as scanlines, until we reach the target time per frame to be spent uploading texture data
@@ -58,6 +59,7 @@ public:
 	int getNumBusy();
 
 private:
+
 
 	ProgressiveTextureLoadQueue(); //use instance()!
 

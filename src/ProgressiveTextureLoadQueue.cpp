@@ -31,11 +31,16 @@ ProgressiveTextureLoadQueue::ProgressiveTextureLoadQueue(){
 	maxSimlutaneousThreads = 2;
 	ids = 0;
 	verbose = false;
+	ofAddListener(ofEvents().update, this, &ProgressiveTextureLoadQueue::update);
 }
 
-
-ofxProgressiveTextureLoad* ProgressiveTextureLoadQueue::loadTexture(string path, ofTexture* tex, bool createMipMaps,
-											  int resizeQuality, bool highPriority){
+ofxProgressiveTextureLoad*
+ProgressiveTextureLoadQueue::loadTexture(string path,
+										 ofTexture* tex,
+										 bool createMipMaps,
+										 bool ARB,
+										 int resizeQuality,
+										 bool highPriority){
 
 	LoadRequest r;
 	r.path = path;
@@ -45,7 +50,7 @@ ofxProgressiveTextureLoad* ProgressiveTextureLoadQueue::loadTexture(string path,
 	r.loader->setScanlinesPerLoop(numLinesPerLoop);
 	r.loader->setTargetTimePerFrame(maxTimeTakenPerFrame);
 	r.loader->setTexLodBias(texLodBias);
-	r.loader->setup(tex, resizeQuality, ofGetUsingArbTex());
+	r.loader->setup(tex, resizeQuality, ARB);
 	r.ID = ids;
 	ids++;
 
@@ -76,7 +81,7 @@ void ProgressiveTextureLoadQueue::setTargetTimePerFrame(float ms){
 	if(maxTimeTakenPerFrame < 0.01) maxTimeTakenPerFrame = 0.01; //save dumb developers from themselves
 }
 
-void ProgressiveTextureLoadQueue::update(){
+void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 
 	vector<int> toDelete;
 
