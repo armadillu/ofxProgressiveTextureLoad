@@ -81,7 +81,6 @@ private:
 	vector<LoadRequest> 					pending;
 	vector<LoadRequest>						current;
 
-
 	// params //
 
 	int 				maxSimlutaneousThreads;

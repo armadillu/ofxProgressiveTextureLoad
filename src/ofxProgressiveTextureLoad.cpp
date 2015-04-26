@@ -30,6 +30,7 @@ ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 	isSetup = false;
 	cancelAsap = false;
 	readyForDeletion = false;
+	useOnlyOnce = false;
 }
 
 ofxProgressiveTextureLoad::~ofxProgressiveTextureLoad(){
@@ -275,7 +276,7 @@ void ofxProgressiveTextureLoad::setState(State newState){
 
 void ofxProgressiveTextureLoad::update(){
 
-	if(readyForDeletion) return;
+	if(readyForDeletion && useOnlyOnce) return;
 	bool willBeReadyForDeletion = false;
 
 	#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
@@ -498,7 +499,7 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 		scanlinesLoadedThisFrame += numLinesToLoadThisLoop;
 		uint64_t thisTime = ofGetElapsedTimeMicros() - time;
 		currentTime += thisTime;
-		if(verbose) cout << "loop " << loops << " loaded " << numLinesToLoadThisLoop << " lines and took " << thisTime / 1000.0f << " ms" << endl;
+		if(verbose) ofLogNotice() << "loop " << loops << " loaded " << numLinesToLoadThisLoop << " lines and took " << thisTime / 1000.0f << " ms";
 		loops++;
 	}
 	//if we finished this mipmap but there's time left, we could go on...
@@ -507,7 +508,7 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 		couldGoOn = true;
 	}
 
-	if(verbose) cout << "mipmapLevel " << mipmapLevel << " spent " << currentTime / 1000.0f << " ms and loaded " << scanlinesLoadedThisFrame << " lines across "<< loops << " loops" << endl;
+	if(verbose) ofLogNotice() << "mipmapLevel " << mipmapLevel << " spent " << currentTime / 1000.0f << " ms and loaded " << scanlinesLoadedThisFrame << " lines across "<< loops << " loops";
 
 	lastFrameTime = currentTime / 1000.0f; //in ms!
 
@@ -525,7 +526,7 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 
 void ofxProgressiveTextureLoad::draw(int x, int y, bool debugImages){
 
-	if(readyForDeletion) return;
+	if(readyForDeletion && useOnlyOnce) return;
 
 	if(texture && debugImages){
 		if(isReadyToDrawWhileLoading() || state == IDLE ){

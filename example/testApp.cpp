@@ -1,5 +1,4 @@
 #include "testApp.h"
-#include "ofxGLError.h"
 
 #include "ofxTimeMeasurements.h"
 
@@ -64,12 +63,12 @@ void testApp::update(){
 
 }
 
-void testApp::textureDrawable(ofxProgressiveTextureLoad::textureEvent& arg){
+void testApp::textureDrawable(ofxProgressiveTextureLoad::ProgressiveTextureLoadEvent& arg){
 	ofLogNotice() << "texture Drawable!";
 	textureReadyToDraw = true;
 }
 
-void testApp::textureReady(ofxProgressiveTextureLoad::textureEvent& arg){
+void testApp::textureReady(ofxProgressiveTextureLoad::ProgressiveTextureLoadEvent& arg){
 	if (arg.ok){
 		ofLogNotice() << "textureReady!";
 		TIME_SAMPLE_STOP_NOIF("Total Load Time");
@@ -101,7 +100,6 @@ void testApp::draw(){
 	ofRect(0, 0, s, 5);
 	ofPopMatrix();
 
-	ofxGLError::draw(20,20);
 	float H = 200;
 	plot->draw(0, ofGetHeight() - H, ofGetWidth(), H);
 }

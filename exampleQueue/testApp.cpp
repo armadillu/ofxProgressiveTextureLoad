@@ -1,5 +1,4 @@
 #include "testApp.h"
-#include "ofxGLError.h"
 
 #include "ofxTimeMeasurements.h"
 
@@ -17,12 +16,15 @@ void testApp::setup(){
 	ofDisableArbTex(); //POW2 textueres, GL_TEXTURE_2D!
 	//ofEnableArbTex();
 
+
+	//setup time measurements
 	TIME_SAMPLE_SET_FRAMERATE(60);
 	TIME_SAMPLE_DISABLE_AVERAGE();
 	TIME_SAMPLE_GET_INSTANCE()->setIdleTimeColorFadePercent(0.3);
 	TIME_SAMPLE_SET_REMOVE_EXPIRED_THREADS(false);
 	ofxTimeMeasurements::instance()->setDeadThreadTimeDecay(0.99);
 	TIME_SAMPLE_SET_DRAW_LOCATION(TIME_MEASUREMENTS_TOP_RIGHT);
+
 
 	ProgressiveTextureLoadQueue * q = ProgressiveTextureLoadQueue::instance();
 
@@ -36,10 +38,13 @@ void testApp::setup(){
 		ofTexture* t = new ofTexture(); //create your own texture to got data loaded into; it will be cleared!
 		textures.push_back(t);
 		ready[t] = false;
-		ofxProgressiveTextureLoad * loader = q->loadTexture(imageNames[i%imageNames.size()],
-															t,					/*tex to load into*/
-															true,				/*MIP-MAPS!*/
-															CV_INTER_AREA);		/*Resize Quality*/
+		ofxProgressiveTextureLoad * loader = q->loadTexture(imageNames[i%imageNames.size()], //file to load
+															t,					//ofTexture to load into
+															true,				//mipMaps
+															true,               //GL_TEXTURE_2D or GL_TEXTURE_RECTANGLE_ARB - mimMaps require ARB!
+															CV_INTER_AREA,		//opencv resize quality
+															false				//high priority - puts request at beginning of the queue instead of at the end
+															);
 		ofAddListener(loader->textureReady, this, &testApp::textureReady);
 		ofAddListener(loader->textureDrawable, this, &testApp::textureDrawable);
 	}
@@ -48,17 +53,15 @@ void testApp::setup(){
 
 void testApp::update(){
 
-	ProgressiveTextureLoadQueue::instance()->update();
-
 }
 
 
-void testApp::textureDrawable(ofxProgressiveTextureLoad::textureEvent& arg){
+void testApp::textureDrawable(ofxProgressiveTextureLoad::ProgressiveTextureLoadEvent& arg){
 	ofLogNotice() << "texture Drawable!";
 }
 
 
-void testApp::textureReady(ofxProgressiveTextureLoad::textureEvent& arg){
+void testApp::textureReady(ofxProgressiveTextureLoad::ProgressiveTextureLoadEvent& arg){
 	if (arg.ok){
 		//ofLogNotice() << "textureReady!";
 		ready[arg.tex] = true;
@@ -103,9 +106,6 @@ void testApp::draw(){
 	ofSetColor(255);
 	ofRect(0, 0, s, 5);
 	ofPopMatrix();
-
-	//see if GL is happy
-	ofxGLError::draw(20,ofGetHeight() - 104);
 
 	ProgressiveTextureLoadQueue::instance()->draw(20, ofGetHeight() - 80);
 }

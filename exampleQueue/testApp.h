@@ -6,8 +6,6 @@
 
 //just in case we overrode it in ofxProgressiveTextureLoad.h by disabling measurements
 
-#include "ofxMSATimer.h"
-
 class testApp : public ofBaseApp{
 	public:
 		void setup();
@@ -24,8 +22,8 @@ class testApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
 
-		void textureReady(ofxProgressiveTextureLoad::textureEvent& arg);
-		void textureDrawable(ofxProgressiveTextureLoad::textureEvent& arg);
+		void textureReady(ofxProgressiveTextureLoad::ProgressiveTextureLoadEvent& arg);
+		void textureDrawable(ofxProgressiveTextureLoad::ProgressiveTextureLoadEvent& arg);
 
 		vector<ofTexture *>				textures;
 		vector<ofxProgressiveTextureLoad*>	loaders;

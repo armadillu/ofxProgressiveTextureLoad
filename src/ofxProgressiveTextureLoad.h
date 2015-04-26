@@ -22,6 +22,8 @@
 
 class ofxProgressiveTextureLoad: public ofThread{
 
+	friend class ProgressiveTextureLoadQueue;
+	
 public:
 
 	ofxProgressiveTextureLoad();
@@ -161,6 +163,11 @@ private:
 	static int			numInstances;
 	static float		numMbLoaded;
 	bool				readyForDeletion;
+
+	bool				useOnlyOnce;
+
+	//to be called only by ProgressiveTextureLoadQueue
+	void setWillBeUsedOnlyOnce(bool b){ useOnlyOnce = b; };
 
 
 };
