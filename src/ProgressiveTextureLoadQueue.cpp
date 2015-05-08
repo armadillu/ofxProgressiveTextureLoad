@@ -13,13 +13,6 @@
 
 ProgressiveTextureLoadQueue* ProgressiveTextureLoadQueue::singleton = NULL;
 
-ProgressiveTextureLoadQueue* ProgressiveTextureLoadQueue::instance(){
-	if (!singleton){   // Only allow one instance of class to be generated.
-		singleton = new ProgressiveTextureLoadQueue();
-	}
-	return singleton;
-}
-
 
 
 ProgressiveTextureLoadQueue::ProgressiveTextureLoadQueue(){
@@ -119,6 +112,12 @@ void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 	int c = 0;
 
 	while(pending.size() && current.size() < maxSimlutaneousThreads && c < maxRequestsPerFrame ){
+		if(pending[0].loader->hasBeenAskedToCancelLoad()){
+			pending[0].loader->update(); //send the notification that we got canceled ok
+			delete pending[0].loader;
+			pending.erase(pending.begin());
+			continue;
+		}
 		current.push_back(pending[0]);
 		pending.erase(pending.begin());
 		int indx = current.size()-1;

@@ -50,6 +50,8 @@ public:
 	void setTexLodBias(float bias){texLodBias = bias;}
 	bool isReadyToDrawWhileLoading();
 
+	bool hasBeenAskedToCancelLoad(){ return cancelAsap; }
+
 	float getTimeSpentLastFrame(){ return lastFrameTime;} //in ms!
 	void setVerbose(bool v){verbose = v;}
 	bool isBusy(){return !readyForDeletion;}

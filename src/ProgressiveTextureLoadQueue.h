@@ -15,7 +15,12 @@ class ProgressiveTextureLoadQueue{
 
 public:
 
-	static ProgressiveTextureLoadQueue* instance();
+	static inline ProgressiveTextureLoadQueue* instance(){
+		if (!singleton){   // Only allow one instance of class to be generated.
+			singleton = new ProgressiveTextureLoadQueue();
+		}
+		return singleton;
+	}
 
 	//its your responsibility to add listeners to the returned object (ret)
 	//to get notified when the texture is fully/partially loaded with:

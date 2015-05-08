@@ -285,6 +285,12 @@ void ofxProgressiveTextureLoad::update(){
 
 	switch (state) {
 
+		case IDLE:{
+			if (cancelAsap){
+				wrapUp();
+			}
+		}break;
+
 		case ALLOC_TEXTURE:{
 			texture->clear();
 			ofPoint targetSize = getMipMap0ImageSize();
