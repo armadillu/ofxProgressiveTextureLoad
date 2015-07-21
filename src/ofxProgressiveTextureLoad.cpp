@@ -480,7 +480,11 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 			mipMapLevelAllocPending = false;
 			glTexImage2D(texture->texData.textureTarget,	//target
 						 mipmapLevel,						//mipmap level
+						#if OF_VERSION_MINOR < 9
 						 texture->texData.glTypeInternal,	//internal format
+						#else
+						texture->texData.glInternalFormat,	//internal format
+						#endif
 						 pix->getWidth(),					//w
 						 pix->getHeight(),					//h
 						 0,									//border
