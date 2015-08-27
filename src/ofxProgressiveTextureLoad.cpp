@@ -89,11 +89,10 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 		getPocoThread().setOSPriority(Poco::Thread::getMinOSPriority());
 	}catch(...){}
 
-	while(isThreadRunning()){
+	while(true){
 		if(cancelAsap){
 			setState(IDLE);
 			pendingNotification = true;
-			stopThread();
 			return;
 		}
 		switch (state) {
@@ -106,13 +105,12 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 					bool ok = ofLoadImage(imagePixels, imagePath);
 					if (!ok){
 						ofLogError("ofxProgressiveTextureLoad") << "img loading failed! " << imagePath;
-						stopThread();
 						setState(LOADING_FAILED);
+						return;
 					}else{
 						if(cancelAsap){
 							setState(IDLE);
 							pendingNotification = true;
-							stopThread();
 							return;
 						}
 
@@ -138,7 +136,6 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 						}
 						if(useARB){
 							mipMapLevelPixels[0] = &imagePixels;
-							stopThread();
 							setState(ALLOC_TEXTURE);
 							return;
 						}else{
@@ -150,8 +147,8 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 					TS_STOP_NIF("loadPix " + ofToString(ID));
 					#endif
 					ofLogError("ofxProgressiveTextureLoad") << "exception in threadedFunction()";
-					stopThread();
 					setState(LOADING_FAILED);
+					return;
 				}
 				}break;
 
@@ -160,17 +157,20 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 				TS_START_NIF("resizeImageForMipMaps " + ofToString(ID));
 				#endif
 				try{
-					resizeImageForMipMaps();
+					bool ok = resizeImageForMipMaps();
+					if (!ok){
+						setState(IDLE);
+						pendingNotification = true;
+						return;
+					}
 				}catch(...){
 					ofLogError("ofxProgressiveTextureLoad") << "img resizing failed! " << imagePath;
-					stopThread();
 					setState(LOADING_FAILED); //mm TODO!
 					return;
 				}
 				#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
 				TS_STOP_NIF("resizeImageForMipMaps " + ofToString(ID));
 				#endif
-				stopThread();
 				setState(ALLOC_TEXTURE);
 				return;
 		}
@@ -182,7 +182,7 @@ bool ofxProgressiveTextureLoad::isDoingWorkInThread(){
 
 }
 
-void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
+bool ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 
 	int numC = config.numBytesPerPix;
 	ofPoint targetSize = getMipMap0ImageSize();
@@ -191,10 +191,7 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 	int mipMapLevel = floor(log( MAX(newW, newH) ) / log( 2 )) + 1; //THIS IS KEY! you need to do all mipmap levels or it will draw blank tex!
 
 	if(cancelAsap){
-		setState(IDLE);
-		pendingNotification = true;
-		stopThread();
-		return;
+		return false;
 	}
 
 	//fill in an opencv image
@@ -207,10 +204,7 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 	}
 
 	if(cancelAsap){
-		setState(IDLE);
-		pendingNotification = true;
-		stopThread();
-		return;
+		return false;
 	}
 
 	ofPixels *pix = new ofPixels();
@@ -223,10 +217,7 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 		for(int currentMipMapLevel = 1 ; currentMipMapLevel < mipMapLevel; currentMipMapLevel++){
 
 			if(cancelAsap){
-				setState(IDLE);
-				pendingNotification = true;
-				stopThread();
-				return;
+				return false;
 			}
 
 			//TS_START_NIF("resize mipmap " + ofToString(currentMipMapLevel));
@@ -243,6 +234,7 @@ void ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 			//ofSaveImage(*tmpPix, "pix" + ofToString(currentMipMapLevel) + ".jpg" ); //debug!
 		}
 	}
+	return true;
 }
 
 

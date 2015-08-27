@@ -153,7 +153,7 @@ private:
 
 	void threadedFunction();
 	void wrapUp();
-	void resizeImageForMipMaps();
+	bool resizeImageForMipMaps();
 	bool progressiveTextureUpload(int mipmapLevel, uint64_t & currentTime);
 
 	void setState(State newState);
