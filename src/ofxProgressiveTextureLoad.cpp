@@ -8,6 +8,7 @@
 
 #include "ofxProgressiveTextureLoad.h"
 #include <math.h>
+#include <opencv2/imgproc/imgproc.hpp>
 
 
 int ofxProgressiveTextureLoad::numInstancesCreated = 0;
@@ -84,10 +85,12 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 
 void ofxProgressiveTextureLoad::threadedFunction(){
 
+	#if( OF_VERSION_MINOR <= 9 )
 	try{
 		getPocoThread().setName("ofxProgressiveTextureLoad " + ofToString(ID));
 		getPocoThread().setOSPriority(Poco::Thread::getMinOSPriority());
 	}catch(...){}
+	#endif
 
 	while(true){
 		if(cancelAsap){
