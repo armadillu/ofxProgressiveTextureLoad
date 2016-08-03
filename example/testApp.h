@@ -30,5 +30,4 @@ class testApp : public ofBaseApp{
 	bool textureReadyToDraw;
 	ofxHistoryPlot * plot;
 
-	void threadedFunction();
 };

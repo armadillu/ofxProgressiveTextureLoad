@@ -13,9 +13,6 @@ void testApp::setup(){
 	ofEnableAlphaBlending();
 	ofSetVerticalSync(true);
 	ofSetFrameRate(60);
-	ofDisableArbTex(); //POW2 textueres, GL_TEXTURE_2D!
-	//ofEnableArbTex();
-
 
 	//setup time measurements
 	TIME_SAMPLE_SET_FRAMERATE(60);
@@ -29,9 +26,9 @@ void testApp::setup(){
 	ProgressiveTextureLoadQueue * q = ProgressiveTextureLoadQueue::instance();
 
 	q->setTexLodBias(-0.5); //negative gives you lower mipmaps >> sharper
-	q->setScanlinesPerLoop(32);
-	q->setTargetTimePerFrame(3);
-	q->setNumberSimultaneousLoads(1);
+	q->setScanlinesPerLoop(32); //how many scanlines to upload per batch; we will do as many batches we can fit each frame, given the user alloted time
+	q->setTargetTimePerFrame(3); //set how many MS to spend at most each frame uploading texture data
+	q->setNumberSimultaneousLoads(1); //how many textures can be prepared in the back at the same time. This should be <= your number of CPU cores.
 	q->setVerbose(true);
 
 	for(int i = 0; i < 3; i++){
@@ -39,11 +36,11 @@ void testApp::setup(){
 		textures.push_back(t);
 		ready[t] = false;
 		ofxProgressiveTextureLoad * loader = q->loadTexture(imageNames[i%imageNames.size()], //file to load
-															t,					//ofTexture to load into
-															true,				//mipMaps
-															true,               //GL_TEXTURE_2D or GL_TEXTURE_RECTANGLE_ARB - mimMaps require ARB!
-															CV_INTER_AREA,		//opencv resize quality
-															false				//high priority - puts request at beginning of the queue instead of at the end
+															t,					//ofTexture to load into - it will be cleared for you
+															true,				//do you want mipmaps created for this texture?
+															true,               //USE ARB? meaning GL_TEXTURE_RECTANGLE_ARB or GL_TEXTURE_2D - creating mimMaps requires GL_TEXTURE_2D!
+															CV_INTER_AREA,		//opencv resize quality - to create mipmaps we need to downsample the original image; what resizing quality should we choose in doing so?
+															false				//high priority - puts request at beginning of the queue instead of at the end of it
 															);
 		ofAddListener(loader->textureReady, this, &testApp::textureReady);
 		ofAddListener(loader->textureDrawable, this, &testApp::textureDrawable);

@@ -2,7 +2,7 @@
 
 #include "ofxTimeMeasurements.h"
 
-string imgName = "huge.jpg";
+string imgName = "img.png";
 
 void testApp::setup(){
 
@@ -10,8 +10,6 @@ void testApp::setup(){
 	ofEnableAlphaBlending();
 	ofSetVerticalSync(true);
 	ofSetFrameRate(60);
-	ofDisableArbTex(); //POW2 textueres, GL_TEXTURE_2D!
-	//ofEnableArbTex();
 
 	textureReadyToDraw = false;
 
@@ -21,13 +19,18 @@ void testApp::setup(){
 
 	myTex = new ofTexture(); //create your own texture, it will be cleared so be sure its empty
 
-	//setup the loader by giving it a texture to load into, and a resizing quality
-	//CV_INTER_LINEAR, CV_INTER_NN, CV_INTER_CUBIC, CV_INTER_AREA
-	progressiveTextureLoader.setup(myTex, CV_INTER_CUBIC);
+
+	bool useARB = false; //when creating the GPU texture, should be use GL_TEXTURE_2D or GL_TEXTURE_RECTANGLE_ARB?
+	bool createMipmaps = true;
+	int resizeQuality = CV_INTER_CUBIC; //when creating mipmaps, what resizing quality should we use when downsampling the image?
+										//valid options: CV_INTER_LINEAR, CV_INTER_NN, CV_INTER_CUBIC, CV_INTER_AREA
+
+	//setup the loader by giving it a texture to load into, a resizing quality preference, and wether you want mipmaps created or not
+	progressiveTextureLoader.setup(myTex, resizeQuality, useARB);
 	progressiveTextureLoader.setVerbose(true);
 
 	//these 2 settings control how long it takes for the tex to load
-	progressiveTextureLoader.setScanlinesPerLoop(512);//see header for explanation
+	progressiveTextureLoader.setScanlinesPerLoop(64);//see header for explanation
 	progressiveTextureLoader.setTargetTimePerFrame(10.0f); //how long to spend uploading data per frame, in ms
 
 	//add a listener to get notified when tex is fully loaded
@@ -37,7 +40,8 @@ void testApp::setup(){
 
 	//start loading the texture!
 	TIME_SAMPLE_START_NOIF("Total Load Time");
-	progressiveTextureLoader.loadTexture(imgName, true /*create mipmaps*/);
+
+	progressiveTextureLoader.loadTexture(imgName, createMipmaps /*create mipmaps*/);
 
 	plot = new ofxHistoryPlot( NULL, "frameTime", 400, false);
 	plot->setRange(0, 18.0f);
@@ -85,7 +89,7 @@ void testApp::draw(){
 	ofSetColor(255);
 	
 	if(textureReadyToDraw){
-		myTex->draw(0,0, ofGetWidth(), ofGetHeight());
+		myTex->draw(0,0, ofGetMouseX(), ofGetMouseY());
 	}
 	progressiveTextureLoader.draw(20, 50); //debug
 
@@ -95,7 +99,7 @@ void testApp::draw(){
 	ofTranslate(ofGetWidth()/2, 70);
 	ofSetColor(0);
 	ofCircle(0, 0, s);
-	ofRotate(ofGetFrameNum() * 3.0, 0, 0, 1);
+	ofRotate(ofGetFrameNum() * 5.0, 0, 0, 1);
 	ofSetColor(255);
 	ofRect(0, 0, s, 5);
 	ofPopMatrix();

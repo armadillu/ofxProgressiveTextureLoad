@@ -139,6 +139,7 @@ private:
 
 	int 				resizeQuality;
 	float 				startTime;
+	float 				totalLoadTime;
 	float				lastFrameTime;
 
 	bool				notifiedReadyToDraw;
@@ -158,7 +159,7 @@ private:
 
 	void setState(State newState);
 
-	ofPoint getMipMap0ImageSize();
+	ofPoint getMipMapImageSize(int mipmapLevel);
 
 	int					ID;
 	static int			numInstancesCreated;
