@@ -148,6 +148,6 @@ void ProgressiveTextureLoadQueue::draw(int x, int y){
 	for(int i = 0 ; i < current.size(); i++){
 		msg += "\n  " + ofToString(i) + ": " + current[i].loader->getStateString();
 	}
-	ofDrawBitmapStringHighlight(msg, x, y);
+	ofDrawBitmapStringHighlight(msg, x, y, ofColor::black, ofColor::limeGreen);
 }
 
