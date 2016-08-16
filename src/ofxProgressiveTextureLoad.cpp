@@ -244,8 +244,8 @@ bool ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 
 ofPoint ofxProgressiveTextureLoad::getMipMapImageSize(int mipmaplevel){
 	int divisionFactor = (mipmaplevel == 0) ? 1 : (pow(2, mipmaplevel));
-	int mipmapTexSizeX = ofNextPow2(mipMapLevelPixels[0]->getWidth()) / divisionFactor;
-	int mipmapTexSizeY = ofNextPow2(mipMapLevelPixels[0]->getHeight()) / divisionFactor;
+	int mipmapTexSizeX = (mipMapLevelPixels[0]->getWidth()) / divisionFactor;
+	int mipmapTexSizeY = (mipMapLevelPixels[0]->getHeight()) / divisionFactor;
 	if(mipmapTexSizeX < 1) mipmapTexSizeX = 1;
 	if(mipmapTexSizeY < 1) mipmapTexSizeY = 1;
 	return ofPoint(mipmapTexSizeX, mipmapTexSizeY);
@@ -287,10 +287,10 @@ void ofxProgressiveTextureLoad::update(){
 			texture->clear();
 			int newW = imagePixels.getWidth();
 			int newH = imagePixels.getHeight();
-			if(createMipMaps || !useARB){
-				newW = ofNextPow2(newW);
-				newH = ofNextPow2(newH);
-			}
+			//if(createMipMaps || !useARB){
+			//	newW = ofNextPow2(newW);
+			//	newH = ofNextPow2(newH);
+			//}
 
 			texture->allocate(newW, newH,
 							  ofGetGlInternalFormat(imagePixels),
@@ -468,8 +468,8 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 	ofPixels * pix = mipMapLevelPixels[mipmapLevel];
 	int scanlinesLoadedThisFrame = 0;
 	int loops = 0;
-	
-	ofSetPixelStoreiAlignment(GL_PACK_ALIGNMENT, pix->getWidth(), 1, ofGetNumChannelsFromGLFormat(glFormat));
+
+	ofSetPixelStoreiAlignment(GL_UNPACK_ALIGNMENT, pix->getBytesStride());
 
 	while (currentTime < maxTimeTakenPerFrame * 1000.0f && loadedScanLinesSoFar < pix->getHeight()) {
 
@@ -481,7 +481,7 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 			numLinesToLoadThisLoop = numLinesPerLoop;
 		}
 
-		if(mipMapLevelAllocPending){ //level 0 mipmap is already allocated!
+		if(mipMapLevelAllocPending && mipmapLevel != 0){ //level 0 mipmap is already allocated!
 			mipMapLevelAllocPending = false;
 			ofPoint mipmapSize = getMipMapImageSize(mipmapLevel);
 
