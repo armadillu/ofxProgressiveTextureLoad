@@ -624,5 +624,6 @@ string ofxProgressiveTextureLoad::getStateString(){
 			return msg;
 		}
 	}
+	return "";
 }
 
