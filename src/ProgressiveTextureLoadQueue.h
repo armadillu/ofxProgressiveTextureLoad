@@ -62,6 +62,7 @@ public:
 	void setVerbose(bool v){verbose = v;}
 
 	int getNumBusy();
+	int getNumPendingTextures(){return pending.size() + current.size(); }
 
 private:
 

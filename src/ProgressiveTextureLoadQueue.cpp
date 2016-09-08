@@ -24,7 +24,7 @@ ProgressiveTextureLoadQueue::ProgressiveTextureLoadQueue(){
 	maxSimlutaneousThreads = 2;
 	ids = 0;
 	verbose = false;
-	ofAddListener(ofEvents().update, this, &ProgressiveTextureLoadQueue::update);
+	ofAddListener(ofEvents().update, this, &ProgressiveTextureLoadQueue::update, OF_EVENT_ORDER_BEFORE_APP);
 }
 
 ofxProgressiveTextureLoad*
@@ -131,6 +131,11 @@ int ProgressiveTextureLoadQueue::getNumBusy(){
 	int n = 0;
 	for(int i = 0; i < current.size(); i++){
 		if(current[i].loader->isBusy()){ //must have finished loading! time to start next one!
+			n++;
+		}
+	}
+	for(int i = 0; i < pending.size(); i++){
+		if(pending[i].loader->isBusy()){ //must have finished loading! time to start next one!
 			n++;
 		}
 	}
