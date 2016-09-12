@@ -198,7 +198,8 @@ bool ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 	ofPoint targetSize = ofVec2f(imagePixels.getWidth(), imagePixels.getHeight());
 	int newW = targetSize.x;
 	int newH = targetSize.y;
-	int mipMapLevel = floor(log( MAX(ofNextPow2(newW), ofNextPow2(newH)) ) / log( 2 )) + 1; //THIS IS KEY! you need to do all mipmap levels or it will draw blank tex!
+	int largestSide = MAX((newW), (newH));
+	int mipMapLevel = floor(log( largestSide ) / log( 2 )) + 1; //THIS IS KEY! you need to do all mipmap levels or it will draw blank tex!
 
 	if(cancelAsap){
 		return false;
@@ -473,6 +474,7 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 
 	while (currentTime < maxTimeTakenPerFrame * 1000.0f && loadedScanLinesSoFar < pix->getHeight()) {
 
+
 		uint64_t time = ofGetElapsedTimeMicros();
 		unsigned char * data = pix->getPixels() + numC * (int)pix->getWidth() * loadedScanLinesSoFar;
 
@@ -481,24 +483,29 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 			numLinesToLoadThisLoop = numLinesPerLoop;
 		}
 
-		if(mipMapLevelAllocPending && mipmapLevel != 0){ //level 0 mipmap is already allocated!
+		if (mipMapLevelAllocPending && mipmapLevel != 0) { //level 0 mipmap is already allocated!
+
+			//if (verbose) ofLogNotice() << "loop  " << loops;
 			mipMapLevelAllocPending = false;
 			ofPoint mipmapSize = getMipMapImageSize(mipmapLevel);
 
-			if(verbose) ofLogNotice() << "allocating mipmap level " << mipmapLevel << " at " << mipmapSize.x << "x" << mipmapSize.y;
+			//if (verbose) ofLogNotice() << "allocating mipmap level " << mipmapLevel << " at " << mipmapSize.x << "x" << mipmapSize.y;
+			
 			glTexImage2D(texture->texData.textureTarget,	//target
-						 mipmapLevel,						//mipmap level
+							mipmapLevel,						//mipmap level
 						#if OF_VERSION_MINOR < 9
-						 texture->texData.glTypeInternal,	//internal format
+							texture->texData.glTypeInternal,	//internal format
 						#else
-						 texture->texData.glInternalFormat,	//internal format
+							texture->texData.glInternalFormat,	//internal format
 						#endif
-						 mipmapSize.x,					//w
-						 mipmapSize.y,					//h
-						 0,									//border
-						 glFormat,							//format
-						 glPixelType,						//type
-						 0 );								//pixels
+							mipmapSize.x,					//w
+							mipmapSize.y,					//h
+							0,									//border
+							glFormat,							//format
+							glPixelType,						//type
+							0 );								//pixels
+
+			
 		}
 
 		glTexSubImage2D(texture->texData.textureTarget,	//target
