@@ -54,6 +54,7 @@ public:
 
 	float getTimeSpentLastFrame(){ return lastFrameTime;} //in ms!
 	void setVerbose(bool v){verbose = v;}
+	bool canBeDeleted(){return readyForDeletion;}
 	bool isBusy(){return !readyForDeletion || state == LOADING_PIXELS;}
 	bool isUploadingTextures(){return state == LOADING_TEX || state == LOADING_MIP_MAPS || state == ALLOC_TEXTURE; }
 	

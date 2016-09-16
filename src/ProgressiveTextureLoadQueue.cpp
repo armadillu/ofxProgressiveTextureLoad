@@ -85,7 +85,7 @@ void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 
 		current[i].loader->update();
 
-		if(!current[i].loader->isBusy()){ //must have finished loading! time to start next one!
+		if(current[i].loader->canBeDeleted()){ //must have finished loading! time to start next one!
 			toDelete.push_back(i);
 		}
 		if(current[i].loader->isUploadingTextures()){
