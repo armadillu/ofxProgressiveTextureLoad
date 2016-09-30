@@ -34,6 +34,7 @@ public:
 										   bool highPriority);
 
 	void draw(int x, int y);
+	string getStatsAsText();
 
 	void update( ofEventArgs & args ); //dont call it, it happens automatically!
 

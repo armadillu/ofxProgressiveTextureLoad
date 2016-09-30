@@ -142,17 +142,20 @@ int ProgressiveTextureLoadQueue::getNumBusy(){
 	return n;
 }
 
-
-void ProgressiveTextureLoadQueue::draw(int x, int y){
+string ProgressiveTextureLoadQueue::getStatsAsText(){
 
 	string msg = "ProgressiveTextureLoadQueue (" + ofToString(ofxProgressiveTextureLoad::getNumInstances()) +
-	"/"+ ofToString(maxSimlutaneousThreads) + 
-	")\nTotal Loaded: " + ofToString(ofxProgressiveTextureLoad::getNumMbLoaded(),1) + "MB"+
-	"\nPending: " + ofToString(pending.size());
+		"/" + ofToString(maxSimlutaneousThreads) +
+		")\nTotal Loaded: " + ofToString(ofxProgressiveTextureLoad::getNumMbLoaded(), 1) + "MB" +
+		"\nPending: " + ofToString(pending.size());
 
-	for(int i = 0 ; i < current.size(); i++){
-		msg += "\n  " + ofToString(i) + ": " + current[i].loader->getStateString();
+	for (int i = 0; i < current.size(); i++) {
+		msg += "\n   " + ofToString(i) + ": " + current[i].loader->getStateString();
 	}
-	ofDrawBitmapStringHighlight(msg, x, y, ofColor::black, ofColor::limeGreen);
+	return msg;
+}
+
+void ProgressiveTextureLoadQueue::draw(int x, int y){
+	ofDrawBitmapStringHighlight(getStatsAsText(), x, y, ofColor::black, ofColor::limeGreen);
 }
 
