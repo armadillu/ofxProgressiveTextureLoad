@@ -489,8 +489,7 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 			mipMapLevelAllocPending = false;
 			ofPoint mipmapSize = getMipMapImageSize(mipmapLevel);
 
-			//if (verbose) ofLogNotice() << "allocating mipmap level " << mipmapLevel << " at " << mipmapSize.x << "x" << mipmapSize.y;
-			
+			if (verbose) ofLogError("ofxProgressiveTextureLoad") << "tex " << texture->texData.textureTarget << " allocating mipmap level " << mipmapLevel << " [" << pix->getWidth() << "x" << numLinesToLoadThisLoop << "]";
 			glTexImage2D(texture->texData.textureTarget,	//target
 							mipmapLevel,						//mipmap level
 						#if OF_VERSION_MINOR < 9
@@ -507,18 +506,24 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 
 			
 		}
-
-		glTexSubImage2D(texture->texData.textureTarget,	//target
-						mipmapLevel,					//mipmap level
-						0,								//x offset
-						loadedScanLinesSoFar,			//y offset
-						pix->getWidth(),				//width
-						numLinesToLoadThisLoop,			//height >> numLinesPerLoop line per iteration
-						glFormat,						//format
-						glPixelType,					//type
-						data							//pixels
-						);
-
+		
+		#ifdef TARGET_WIN32
+		if (numLinesToLoadThisLoop > 1) { //This is a workaround for WINDOWS ATI DRIVERS crashing when uploading 1x1 tex data!?
+		#else
+		{
+		#endif
+			if (verbose) ofLogWarning("ofxProgressiveTextureLoad") << "tex " << texture->texData.textureTarget << " loading mipmap level " << mipmapLevel << " [" << pix->getWidth() << "x" << numLinesToLoadThisLoop << "]";
+			glTexSubImage2D(texture->texData.textureTarget,	//target
+				mipmapLevel,					//mipmap level
+				0,								//x offset
+				loadedScanLinesSoFar,			//y offset
+				pix->getWidth(),				//width
+				numLinesToLoadThisLoop,			//height >> numLinesPerLoop line per iteration
+				glFormat,						//format
+				glPixelType,					//type
+				data							//pixels
+			);
+		}
 		loadedScanLinesSoFar += numLinesToLoadThisLoop;
 		scanlinesLoadedThisFrame += numLinesToLoadThisLoop;
 		uint64_t thisTime = ofGetElapsedTimeMicros() - time;
