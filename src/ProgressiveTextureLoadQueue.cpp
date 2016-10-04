@@ -102,12 +102,22 @@ void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 		current[i].loader->setTargetTimePerFrame(timePerLoader);
 	}
 
-	//dealloc and remove from current all the finished ones
+	//go though expired loaders and put them in a future delete list
 	for(int i = toDelete.size()-1; i >= 0 ; i--){
-		delete current[toDelete[i]].loader;
+		//delete current[toDelete[i]].loader;
+		toDeleteSoon.push_back(make_pair(current[toDelete[i]], ofGetElapsedTimef() + 1)); //will delete in N seconds
 		current.erase(current.begin() + toDelete[i]);
 	}
 
+	//dealloc and remove stuff older loaders that have finished a while ago
+	float t = ofGetElapsedTimef();
+	for(int i = toDeleteSoon.size()-1; i >= 0 ; i--){
+		if(toDeleteSoon[i].second < t){
+			delete toDeleteSoon[i].first.loader;
+			toDeleteSoon.erase(toDeleteSoon.begin() + i);
+		}
+	}
+	
 	//is there stuff to do?
 	int c = 0;
 

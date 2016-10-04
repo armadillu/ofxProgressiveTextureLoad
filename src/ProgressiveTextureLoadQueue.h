@@ -87,6 +87,7 @@ private:
 
 	vector<LoadRequest> 					pending;
 	vector<LoadRequest>						current;
+	vector<pair<LoadRequest, float>>		toDeleteSoon;
 
 	// params //
 
