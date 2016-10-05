@@ -36,16 +36,10 @@ ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 
 ofxProgressiveTextureLoad::~ofxProgressiveTextureLoad(){
 	//delete all mipmap pixels
-	if(mipMapLevelPixels.size()){
-		if(useARB){
-			//dont do anything, we never allocated new pixels!
-		}else{
-			for(int i = 0; i < mipMapLevelPixels.size(); i++){
-				delete mipMapLevelPixels[i];
-			}
-		}
-		mipMapLevelPixels.clear();
+	for(int i = 0; i < mipMapLevelPixels.size(); i++){
+		delete mipMapLevelPixels[i];
 	}
+	mipMapLevelPixels.clear();
 	numInstances--;
 }
 
