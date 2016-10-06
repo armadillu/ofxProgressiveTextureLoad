@@ -77,7 +77,7 @@ void ProgressiveTextureLoadQueue::setTargetTimePerFrame(float ms){
 
 void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 
-	vector<int> toDelete;
+	vector<int> indicesToDelete;
 
 	//see who is finished
 	int numUploadingTextures = 0;
@@ -86,7 +86,7 @@ void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 		current[i].loader->update();
 
 		if(current[i].loader->canBeDeleted()){ //must have finished loading! time to start next one!
-			toDelete.push_back(i);
+			indicesToDelete.push_back(i);
 		}
 		if(current[i].loader->isUploadingTextures()){
 			numUploadingTextures++;
@@ -103,17 +103,17 @@ void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 	}
 
 	//go though expired loaders and put them in a future delete list
-	for(int i = toDelete.size()-1; i >= 0 ; i--){
+	for(int i = indicesToDelete.size()-1; i >= 0 ; i--){
 		//delete current[toDelete[i]].loader;
-		toDeleteSoon.push_back(make_pair(current[toDelete[i]], ofGetElapsedTimef() + 1)); //will delete in N seconds
-		current.erase(current.begin() + toDelete[i]);
+		toDeleteSoon.push_back(make_pair(current[indicesToDelete[i]], ofGetElapsedTimef() + 1)); //will delete in N seconds
+		current.erase(current.begin() + indicesToDelete[i]);
 	}
 
 	//dealloc and remove stuff older loaders that have finished a while ago
 	float t = ofGetElapsedTimef();
 	for(int i = toDeleteSoon.size()-1; i >= 0 ; i--){
 		if(toDeleteSoon[i].second < t){
-			delete toDeleteSoon[i].first.loader;
+			delete ((ofxProgressiveTextureLoad *)toDeleteSoon[i].first.loader);
 			toDeleteSoon.erase(toDeleteSoon.begin() + i);
 		}
 	}
