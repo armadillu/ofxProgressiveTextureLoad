@@ -113,7 +113,10 @@ void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 	float t = ofGetElapsedTimef();
 	for(int i = toDeleteSoon.size()-1; i >= 0 ; i--){
 		if(toDeleteSoon[i].second < t){
-			delete ((ofxProgressiveTextureLoad *)toDeleteSoon[i].first.loader);
+			try{
+				delete toDeleteSoon[i].first.loader;
+				toDeleteSoon[i].first.loader = NULL;
+			}catch(...){}
 			toDeleteSoon.erase(toDeleteSoon.begin() + i);
 		}
 	}
