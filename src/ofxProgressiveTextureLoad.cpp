@@ -178,7 +178,7 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 				TS_STOP_NIF("resizeImageForMipMaps " + ofToString(ID));
 				#endif
 				setState(ALLOC_TEXTURE);
-				sleep(1);
+				sleep(1); //working around the of thread issue where very short lived threads cause expcetions sometimes
 				return;
 		}
 	}
