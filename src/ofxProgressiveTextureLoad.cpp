@@ -38,7 +38,9 @@ ofxProgressiveTextureLoad::~ofxProgressiveTextureLoad(){
 	//delete all mipmap pixels
 	//cout << "begin delete ofxProgressiveTextureLoad " << this << endl;
 	for(int i = 0; i < mipMapLevelPixels.size(); i++){
-		delete mipMapLevelPixels[i];
+		if(mipMapLevelPixels[i] != &imagePixels){ //in some cases where no resize needed we dont actually allocate pix, we only reference local pixels
+			delete mipMapLevelPixels[i];
+		}
 	}
 	mipMapLevelPixels.clear();
 	numInstances--;
