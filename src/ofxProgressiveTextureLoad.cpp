@@ -84,11 +84,9 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 
 void ofxProgressiveTextureLoad::threadedFunction(){
 
-	#if( OF_VERSION_MINOR <= 9 )
-	try{
-		getPocoThread().setName("ofxProgressiveTextureLoad " + ofToString(ID));
-		getPocoThread().setOSPriority(Poco::Thread::getMinOSPriority());
-	}catch(...){}
+	#ifdef TARGET_WIN32
+	#else
+	pthread_setname_np("ofxProgressiveTextureLoad");
 	#endif
 
 	while(true){
