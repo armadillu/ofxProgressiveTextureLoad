@@ -8,7 +8,7 @@
 
 #include "ofxProgressiveTextureLoad.h"
 #include <math.h>
-#include <opencv2/imgproc/imgproc.hpp>
+#include "opencv2/imgproc/imgproc.hpp"
 
 
 int ofxProgressiveTextureLoad::numInstancesCreated = 0;
@@ -85,8 +85,6 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 void ofxProgressiveTextureLoad::threadedFunction(){
 
 	#ifdef TARGET_WIN32
-	#elif defined(TARGET_LINUX)
-	pthread_setname_np(pthread_self(), "ofxProgressiveTextureLoad");
 	#else
 	pthread_setname_np("ofxProgressiveTextureLoad");
 	#endif
@@ -303,10 +301,12 @@ void ofxProgressiveTextureLoad::update(){
 			//setup OF texture sizes!
 			texture->texData.width = imagePixels.getWidth();
 			texture->texData.height = imagePixels.getHeight();
+			#ifndef TARGET_OPENGLES
 			if(texture->texData.textureTarget == GL_TEXTURE_RECTANGLE_ARB){
 				texture->texData.tex_t = imagePixels.getWidth();
 				texture->texData.tex_u = imagePixels.getHeight();
 			}else{
+			#endif
 				if(createMipMaps){
 					texture->texData.tex_t = 1;
 					texture->texData.tex_u = 1;
@@ -314,7 +314,9 @@ void ofxProgressiveTextureLoad::update(){
 					texture->texData.tex_t = imagePixels.getWidth() / (float)ofNextPow2(imagePixels.getWidth());
 					texture->texData.tex_u = imagePixels.getHeight() / (float)ofNextPow2(imagePixels.getHeight());
 				}
+			#ifndef TARGET_OPENGLES
 			}
+			#endif
 			texture->texData.tex_w = imagePixels.getWidth();
 			texture->texData.tex_h = imagePixels.getHeight();
 
@@ -362,8 +364,10 @@ void ofxProgressiveTextureLoad::update(){
 				while(canGoOn && !wrappingUp){
 					if (mipMapLevelLoaded){
 						texture->bind();
+						#ifndef TARGET_OPENGLES
 						glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_BASE_LEVEL, currentMipMapLevel);
 						glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAX_LEVEL, mipMapLevelPixels.size() - 1  );
+						#endif
 						int mipmapsLoaded = mipMapLevelPixels.size() - currentMipMapLevel;
 						if (!notifiedReadyToDraw && mipmapsLoaded >= 3 ){ //notify the user that the texture is drawable right now, and will progressively draw
 							notifiedReadyToDraw = true;
@@ -376,13 +380,17 @@ void ofxProgressiveTextureLoad::update(){
 							ev.elapsedTime = ofGetElapsedTimef() - startTime;
 							ev.texturePath = imagePath;
 							ofNotifyEvent(textureDrawable, ev, this);
+							#ifndef TARGET_OPENGLES
 							glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 							glTexParameteri(texture->texData.textureTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+							#endif
 							if(verbose) ofLogNotice("ofxProgressiveTextureLoad") << "Texture Ready To Draw! Time So far: " << ofGetElapsedTimef() - startTime << "sec";
 						}
+						#ifndef TARGET_OPENGLES
 						if (mipmapsLoaded >= 4){
 							glTexParameterf(texture->texData.textureTarget, GL_TEXTURE_LOD_BIAS, texLodBias);
 						}
+						#endif
 						texture->unbind();
 
 						mipMapLevelLoaded = false;
