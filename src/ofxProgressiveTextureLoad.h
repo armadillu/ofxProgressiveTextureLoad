@@ -2,7 +2,7 @@
 //  ofxProgressiveTextureLoad.h
 //  BaseApp
 //
-//  Created by Oriol Ferrer Mesi√† on 16/09/14.
+//  Created by Oriol Ferrer Mesià on 16/09/14.
 //
 //
 
