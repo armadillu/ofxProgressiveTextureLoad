@@ -67,6 +67,9 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 
 		startTime = ofGetElapsedTimef();
 		createMipMaps = withMipMaps;
+		#ifdef TARGET_OPENGLES
+		createMipMaps = false;
+		#endif
 		pendingNotification = false;
 		loadedScanLinesSoFar = 0;
 		imagePath = path;
@@ -305,7 +308,6 @@ void ofxProgressiveTextureLoad::update(){
 				texture->texData.tex_t = imagePixels.getWidth();
 				texture->texData.tex_u = imagePixels.getHeight();
 			}else{
-			#endif
 				if(createMipMaps){
 					texture->texData.tex_t = 1;
 					texture->texData.tex_u = 1;
@@ -313,8 +315,10 @@ void ofxProgressiveTextureLoad::update(){
 					texture->texData.tex_t = imagePixels.getWidth() / (float)ofNextPow2(imagePixels.getWidth());
 					texture->texData.tex_u = imagePixels.getHeight() / (float)ofNextPow2(imagePixels.getHeight());
 				}
-			#ifndef TARGET_OPENGLES
 			}
+			#else
+			texture->texData.tex_t = imagePixels.getWidth() / (float)ofNextPow2(imagePixels.getWidth());
+			texture->texData.tex_u = imagePixels.getHeight() / (float)ofNextPow2(imagePixels.getHeight());
 			#endif
 			texture->texData.tex_w = imagePixels.getWidth();
 			texture->texData.tex_h = imagePixels.getHeight();
