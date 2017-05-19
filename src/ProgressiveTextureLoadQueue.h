@@ -106,6 +106,10 @@ protected:
 	//For some reason if we try to delete them it triggers a SIGABRT, so we at least store them
 	//here to keep track of them. as the list grows, there might be a point in which no moer threads
 	//cant be spawned (unclear TODO needs testing)
+	//to be clear, this only seems to happen when the images to load are extremelly tiny, this seems to
+	//make the thread life span so short, that by the time the thread is created its alreade done
+	//another option is to make the thread sleep a bit after its done but that's not very pretty
+	// TLDR - if your textures are very small, you might be better of loading them directly.
 
 };
 
