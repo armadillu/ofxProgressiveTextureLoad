@@ -27,12 +27,13 @@ class ofxProgressiveTextureLoad: public ofThread{
 public:
 
 	ofxProgressiveTextureLoad();
-	virtual ~ofxProgressiveTextureLoad();
+	~ofxProgressiveTextureLoad();
 
 	//if using ARB Textures, no resize is necessary!
 	//you cant create mipmaps if using ARB!
 	void setup(ofTexture* tex, int resizeQuality = CV_INTER_CUBIC, bool useARB = false);
 	void loadTexture(string path, bool withMipMaps);
+	int getID(){return ID;}
 
 	void update();
 

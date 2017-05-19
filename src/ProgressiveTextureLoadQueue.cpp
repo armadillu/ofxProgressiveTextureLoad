@@ -85,7 +85,8 @@ void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 
 		current[i].loader->update();
 
-		if(current[i].loader->canBeDeleted()){ //must have finished loading! time to start next one!
+		if(current[i].loader->canBeDeleted()){ //work is done
+
 			indicesToDelete.push_back(i);
 		}
 		if(current[i].loader->isUploadingTextures()){
@@ -102,24 +103,18 @@ void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 		current[i].loader->setTargetTimePerFrame(timePerLoader);
 	}
 
-	//go though expired loaders and put them in a future delete list
-	float t = ofGetElapsedTimef();
+	//go though expired loaders and delete them
 	for(int i = indicesToDelete.size()-1; i >= 0 ; i--){
-		toDeleteSoon.push_back(make_pair(current[indicesToDelete[i]], t + 0.5)); //will delete in 0.1 seconds
+		int delIndex = indicesToDelete[i];
+		if(current[delIndex].loader->getNativeThread().get_id() == std::thread::id()){
+			delete current[delIndex].loader;
+		}else{
+			ofLogError("ProgressiveTextureLoadQueue") << "thread is done but we will crash if we try to delete - LEAKING";
+			//delete current[delIndex].loader;
+		}
 		current.erase(current.begin() + indicesToDelete[i]);
 	}
 
-	//dealloc and remove stuff older loaders that have finished a while ago
-	for(int i = toDeleteSoon.size()-1; i >= 0 ; i--){
-		if(toDeleteSoon[i].second < t){
-			try{
-				delete toDeleteSoon[i].first.loader;
-				toDeleteSoon[i].first.loader = NULL;
-			}catch(...){}
-			toDeleteSoon.erase(toDeleteSoon.begin() + i);
-		}
-	}
-	
 	//is there stuff to do?
 	int c = 0;
 

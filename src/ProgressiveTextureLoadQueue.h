@@ -65,8 +65,7 @@ public:
 	int getNumBusy();
 	int getNumPendingTextures(){return pending.size() + current.size(); }
 
-private:
-
+protected:
 
 	ProgressiveTextureLoadQueue(); //use instance()!
 
@@ -87,7 +86,6 @@ private:
 
 	vector<LoadRequest> 					pending;
 	vector<LoadRequest>						current;
-	vector<pair<LoadRequest, float>>		toDeleteSoon;
 
 	// params //
 
@@ -98,6 +96,17 @@ private:
 	float				texLodBias;
 	int					ids;
 	bool				verbose;
+
+	vector<ofxProgressiveTextureLoad*> leakedObjects;
+	//those are objects whose thread is done, but the os is not ready for them to be deleted.
+	//This seems to happens on some OSs (ios) where one every N threads get into this weird state
+	//where they exited gracefully, but detach() failed and they can0t be joined() either.
+	//you can tell bc after the thread is done, querying the thread object for its ID returns a
+	//valid ID (get_id() != std::thread::id()).
+	//For some reason if we try to delete them it triggers a SIGABRT, so we at least store them
+	//here to keep track of them. as the list grows, there might be a point in which no moer threads
+	//cant be spawned (unclear TODO needs testing)
+
 };
 
 #endif

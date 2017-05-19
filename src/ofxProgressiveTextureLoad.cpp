@@ -17,8 +17,8 @@ float ofxProgressiveTextureLoad::numMbLoaded = 0;
 
 ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 
-	numLinesPerLoop = 16;
-	maxTimeTakenPerFrame = 1.0; //ms
+	numLinesPerLoop = 64;
+	maxTimeTakenPerFrame = 6.0; //ms
 	currentMipMapLevel = 0;
 	state = IDLE;
 	verbose = false;
@@ -87,9 +87,12 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 
 void ofxProgressiveTextureLoad::threadedFunction(){
 
+
 	#ifndef TARGET_WIN32
 	pthread_setname_np("ofxProgressiveTextureLoad");
 	#endif
+
+	float startTime = ofGetElapsedTimef();
 
 	while(true){
 		if(cancelAsap){
@@ -115,7 +118,6 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 							pendingNotification = true;
 							return;
 						}
-
 						#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
 						TS_STOP_NIF("loadPix " + ofToString(ID));
 						#endif
@@ -179,9 +181,12 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 				#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
 				TS_STOP_NIF("resizeImageForMipMaps " + ofToString(ID));
 				#endif
+				 //working around the of thread issue where very short lived threads cause expcetions sometimes
 				setState(ALLOC_TEXTURE);
-				sleep(1); //working around the of thread issue where very short lived threads cause expcetions sometimes
 				return;
+			default:
+				ofLogError("ofxProgressiveTextureLoad") << "how are we here?";
+				break;
 		}
 	}
 }
@@ -287,11 +292,6 @@ void ofxProgressiveTextureLoad::update(){
 			texture->clear();
 			int newW = imagePixels.getWidth();
 			int newH = imagePixels.getHeight();
-			//if(createMipMaps || !useARB){
-			//	newW = ofNextPow2(newW);
-			//	newH = ofNextPow2(newH);
-			//}
-
 			texture->allocate(newW, newH,
 							  ofGetGlInternalFormat(imagePixels),
 							  useARB, //arb! no arb when creating mipmaps
