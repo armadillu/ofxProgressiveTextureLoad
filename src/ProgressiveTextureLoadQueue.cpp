@@ -105,8 +105,7 @@ void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 	//go though expired loaders and put them in a future delete list
 	float t = ofGetElapsedTimef();
 	for(int i = indicesToDelete.size()-1; i >= 0 ; i--){
-		//delete current[toDelete[i]].loader;
-		toDeleteSoon.push_back(make_pair(current[indicesToDelete[i]], t + 0.1)); //will delete in 0.1 seconds
+		toDeleteSoon.push_back(make_pair(current[indicesToDelete[i]], t + 0.5)); //will delete in 0.1 seconds
 		current.erase(current.begin() + indicesToDelete[i]);
 	}
 
@@ -128,7 +127,7 @@ void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 		if(pending[0].loader->hasBeenAskedToCancelLoad()){
 			pending[0].loader->update(); //send the notification that we got canceled ok
 			delete pending[0].loader;
-			pending.erase(pending.begin());
+			pending.erase(pending.begin()); //TODO this doesnt seem safe
 			continue;
 		}
 		current.push_back(pending[0]);
