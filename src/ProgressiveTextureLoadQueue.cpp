@@ -111,6 +111,7 @@ void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 		}else{
 			ofLogError("ProgressiveTextureLoadQueue") << "thread is done but we will crash if we try to delete - LEAKING";
 			//delete current[delIndex].loader;
+			leakedObjects.push_back(current[delIndex].loader);
 		}
 		current.erase(current.begin() + indicesToDelete[i]);
 	}
