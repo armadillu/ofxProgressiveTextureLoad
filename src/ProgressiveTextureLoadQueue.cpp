@@ -81,7 +81,7 @@ void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 
 	//see who is finished
 	int numUploadingTextures = 0;
-	for(int i = 0; i < current.size(); i++){
+	for(size_t i = 0; i < current.size(); i++){
 
 		current[i].loader->update();
 
@@ -99,7 +99,7 @@ void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 		timePerLoader /= numUploadingTextures;
 	}
 
-	for(int i = 0; i < current.size(); i++){
+	for(size_t i = 0; i < current.size(); i++){
 		current[i].loader->setTargetTimePerFrame(timePerLoader);
 	}
 
@@ -137,12 +137,12 @@ void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 
 int ProgressiveTextureLoadQueue::getNumBusy(){
 	int n = 0;
-	for(int i = 0; i < current.size(); i++){
+	for(size_t i = 0; i < current.size(); i++){
 		if(current[i].loader->isBusy()){ //must have finished loading! time to start next one!
 			n++;
 		}
 	}
-	for(int i = 0; i < pending.size(); i++){
+	for(size_t i = 0; i < pending.size(); i++){
 		if(pending[i].loader->isBusy()){ //must have finished loading! time to start next one!
 			n++;
 		}
@@ -157,7 +157,7 @@ string ProgressiveTextureLoadQueue::getStatsAsText(){
 		")\nTotal Loaded: " + ofToString(ofxProgressiveTextureLoad::getNumMbLoaded(), 1) + "MB" +
 		"\nPending: " + ofToString(pending.size());
 
-	for (int i = 0; i < current.size(); i++) {
+	for (size_t i = 0; i < current.size(); i++) {
 		msg += "\n   " + ofToString(i) + ": " + current[i].loader->getStateString();
 	}
 	return msg;

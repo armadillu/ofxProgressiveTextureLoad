@@ -37,7 +37,7 @@ ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 ofxProgressiveTextureLoad::~ofxProgressiveTextureLoad(){
 	//delete all mipmap pixels
 	//cout << "begin delete ofxProgressiveTextureLoad " << this << endl;
-	for(int i = 0; i < mipMapLevelPixels.size(); i++){
+	for(size_t i = 0; i < mipMapLevelPixels.size(); i++){
 		if(mipMapLevelPixels[i] != &imagePixels){ //in some cases where no resize needed we dont actually allocate pix, we only reference local pixels
 			delete mipMapLevelPixels[i];
 		}
@@ -211,7 +211,7 @@ bool ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 
 	//fill in an opencv image
 	cv::Mat mipMap0(imagePixels.getHeight(), imagePixels.getWidth(), config.opencvFormat);
-	memcpy( mipMap0.data,  imagePixels.getPixels(), imagePixels.getWidth() * imagePixels.getHeight() * numC);
+	memcpy( mipMap0.data,  imagePixels.getData(), imagePixels.getWidth() * imagePixels.getHeight() * numC);
 
 	if(cancelAsap){
 		return false;
@@ -487,7 +487,7 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 
 
 		uint64_t time = ofGetElapsedTimeMicros();
-		unsigned char * data = pix->getPixels() + numC * (int)pix->getWidth() * loadedScanLinesSoFar;
+		unsigned char * data = pix->getData() + numC * (int)pix->getWidth() * loadedScanLinesSoFar;
 
 		int numLinesToLoadThisLoop = pix->getHeight() - loadedScanLinesSoFar;
 		if (numLinesToLoadThisLoop > numLinesPerLoop){
