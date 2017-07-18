@@ -100,15 +100,15 @@ protected:
 	vector<ofxProgressiveTextureLoad*> leakedObjects;
 	//those are objects whose thread is done, but the os is not ready for them to be deleted.
 	//This seems to happens on some OSs (ios) where one every N threads get into this weird state
-	//where they exited gracefully, but detach() failed and they can0t be joined() either.
-	//you can tell bc after the thread is done, querying the thread object for its ID returns a
+	//where they exited gracefully, but detach() failed and they can't be joined() either.
+	//You can tell bc after the thread is done, querying the thread object for its ID returns a
 	//valid ID (get_id() != std::thread::id()).
 	//For some reason if we try to delete them it triggers a SIGABRT, so we at least store them
-	//here to keep track of them. as the list grows, there might be a point in which no moer threads
-	//cant be spawned (unclear TODO needs testing)
-	//to be clear, this only seems to happen when the images to load are extremelly tiny, this seems to
-	//make the thread life span so short, that by the time the thread is created its alreade done
-	//another option is to make the thread sleep a bit after its done but that's not very pretty
+	//here to keep track of them. as the list grows, there might be a point in which no more threads
+	//cant be spawned (unclear TODO! needs testing)
+	//To be clear, this only seems to happen when the images to load are extremelly tiny, this seems to
+	//make the thread life span so short, that by the time the thread is created its already done.
+	//Another option is to make the thread sleep a bit after its done but that's not very pretty - TODO!
 	// TLDR - if your textures are very small, you might be better of loading them directly.
 
 };
