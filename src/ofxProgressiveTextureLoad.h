@@ -18,9 +18,57 @@
 	#include "ofxTimeMeasurements.h"
 #endif
 
+class SimpleThread{
+public:
+
+	SimpleThread(): state(IDLE){}
+
+	bool startThread(bool shouldDetach){
+		if(state == IDLE || state == DONE){
+			this->shouldDetach = shouldDetach;
+			state = RUNNING;
+			thread = std::thread(&SimpleThread::runThread, this);
+			return true;
+		}else{
+			ofLogError("SimpleThread") << "can't start thread as its already running!";
+			return false;
+		}
+	}
+
+	virtual void threadedFunction() = 0; //you want your subclass to implement this method
+
+	bool isRunning(){return state == RUNNING;}
+	bool isDone(){return state== DONE;}
+	std::thread& getThread(){return thread;}
+
+protected:
+
+	enum State{ IDLE, RUNNING, DONE };
+
+	void runThread(){
+		try{
+			threadedFunction();
+		}catch(...){}
+		if(shouldDetach){
+			try{
+				thread.detach();
+			}catch(exception e){
+				ofLogError("SimpleThread") << "wtf! " << e.what();
+			}
+		}
+		state = DONE;
+	}
+
+	std::thread thread;
+	std::atomic<State> state;
+	bool shouldDetach = false;
+};
 
 
-class ofxProgressiveTextureLoad: public ofThread{
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+class ofxProgressiveTextureLoad : public SimpleThread{
 
 	friend class ProgressiveTextureLoadQueue;
 	

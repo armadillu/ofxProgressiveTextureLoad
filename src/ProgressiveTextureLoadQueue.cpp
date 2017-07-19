@@ -106,11 +106,10 @@ void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 	//go though expired loaders and delete them
 	for(int i = indicesToDelete.size()-1; i >= 0 ; i--){
 		int delIndex = indicesToDelete[i];
-		if(current[delIndex].loader->getNativeThread().get_id() == std::thread::id()){
+		if(current[delIndex].loader->getThread().get_id() == std::thread::id()){
 			delete current[delIndex].loader;
 		}else{
 			ofLogError("ProgressiveTextureLoadQueue") << "thread is done but we will crash if we try to delete - LEAKING";
-			//delete current[delIndex].loader;
 			leakedObjects.push_back(current[delIndex].loader);
 		}
 		current.erase(current.begin() + indicesToDelete[i]);
