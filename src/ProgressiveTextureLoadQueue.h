@@ -65,6 +65,8 @@ public:
 	int getNumBusy();
 	int getNumPendingTextures(){return pending.size() + current.size(); }
 
+	static string bytesToHumanReadable(uint64_t bytes, int decimalPrecision);
+
 protected:
 
 	ProgressiveTextureLoadQueue(); //use instance()!

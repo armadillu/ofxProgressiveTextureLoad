@@ -153,7 +153,7 @@ string ProgressiveTextureLoadQueue::getStatsAsText(){
 
 	string msg = "ProgressiveTextureLoadQueue (" + ofToString(ofxProgressiveTextureLoad::getNumInstances()) +
 		"/" + ofToString(maxSimlutaneousThreads) +
-		")\nTotal Loaded: " + ofToString(ofxProgressiveTextureLoad::getNumMbLoaded(), 1) + "MB" +
+		")\nTotal Loaded: " + bytesToHumanReadable((uint64_t)(ofxProgressiveTextureLoad::getNumMbLoaded() * 1024.0 * 1024.0), 2) + 
 		"\nPending: " + ofToString(pending.size());
 
 	for (size_t i = 0; i < current.size(); i++) {
@@ -166,3 +166,20 @@ void ProgressiveTextureLoadQueue::draw(int x, int y){
 	ofDrawBitmapStringHighlight(getStatsAsText(), x, y, ofColor::black, ofColor::limeGreen);
 }
 
+string ProgressiveTextureLoadQueue::bytesToHumanReadable(uint64_t bytes, int decimalPrecision) {
+	string ret;
+	if (bytes < 1024) { //if in bytes range
+		ret = ofToString(bytes) + " bytes";
+	} else {
+		if (bytes < 1024 * 1024) { //if in kb range
+			ret = ofToString(bytes / float(1024), decimalPrecision) + " KB";
+		} else {
+			if (bytes < (1024 * 1024 * 1024)) { //if in Mb range
+				ret = ofToString(bytes / float(1024 * 1024), decimalPrecision) + " MB";
+			} else {
+				ret = ofToString(bytes / float(1024 * 1024 * 1024), decimalPrecision) + " GB";
+			}
+		}
+	}
+	return ret;
+}
