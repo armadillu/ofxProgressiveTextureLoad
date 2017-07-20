@@ -74,7 +74,12 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 		loadedScanLinesSoFar = 0;
 		imagePath = path;
 		setState(LOADING_PIXELS);
-		startThread(true);
+		startThread();
+		try {
+			getThread().detach();
+		} catch (exception e) {
+			ofLogError("ofxProgressiveTextureLoad") << "cant detach thread!";
+		}
 		//ofAddListener(ofEvents().update, this, &ofxProgressiveTextureLoad::update);
 		#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
 		TS_START_NIF("total tex load time " + ofToString(ID));

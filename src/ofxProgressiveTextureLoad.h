@@ -23,9 +23,8 @@ public:
 
 	SimpleThread(): state(IDLE){}
 
-	bool startThread(bool shouldDetach){
+	bool startThread(){
 		if(state == IDLE || state == DONE){
-			this->shouldDetach = shouldDetach;
 			state = RUNNING;
 			thread = std::thread(&SimpleThread::runThread, this);
 			return true;
@@ -35,10 +34,23 @@ public:
 		}
 	}
 
+	void waitForThread( long milliseconds = -1) {
+		std::unique_lock<std::mutex> lck(mutex);
+		if (state == RUNNING) {
+			if (-1 == milliseconds) { //infinite wait
+				condition.wait(lck);
+			} else {
+				if (condition.wait_for(lck, std::chrono::milliseconds(milliseconds)) == std::cv_status::timeout) {
+					ofLogWarning("SimpleThread") << "Timed out waiting for thread!";
+				}
+			}
+		}
+	}
+
 	virtual void threadedFunction() = 0; //you want your subclass to implement this method
 
 	bool isRunning(){return state == RUNNING;}
-	bool isDone(){return state== DONE;}
+	bool isDone(){return state == DONE;}
 	std::thread& getThread(){return thread;}
 
 protected:
@@ -49,19 +61,15 @@ protected:
 		try{
 			threadedFunction();
 		}catch(...){}
-		if(shouldDetach){
-			try{
-				thread.detach();
-			}catch(exception e){
-				ofLogError("SimpleThread") << "wtf! " << e.what();
-			}
-		}
 		state = DONE;
+		condition.notify_all();
 	}
 
 	std::thread thread;
 	std::atomic<State> state;
-	bool shouldDetach = false;
+
+	std::condition_variable condition;
+	std::mutex mutex;
 };
 
 
@@ -101,7 +109,7 @@ public:
 
 	bool hasBeenAskedToCancelLoad(){ return cancelAsap; }
 
-	float getTimeSpentLastFrame(){ return lastFrameTime;} //in ms!
+	float getTimeSpentLastFrame(){ return lastFrameTime && isDone();} //in ms!
 	void setVerbose(bool v){verbose = v;}
 	bool canBeDeleted(){return readyForDeletion;}
 	bool isBusy(){return !readyForDeletion || state == LOADING_PIXELS;}
