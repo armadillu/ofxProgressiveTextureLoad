@@ -171,13 +171,17 @@ string ProgressiveTextureLoadQueue::bytesToHumanReadable(uint64_t bytes, int dec
 	if (bytes < 1024) { //if in bytes range
 		ret = ofToString(bytes) + " bytes";
 	} else {
-		if (bytes < 1024 * 1024) { //if in kb range
+		if (bytes < 1048576ul) { //if in kb range
 			ret = ofToString(bytes / float(1024), decimalPrecision) + " KB";
 		} else {
-			if (bytes < (1024 * 1024 * 1024)) { //if in Mb range
-				ret = ofToString(bytes / float(1024 * 1024), decimalPrecision) + " MB";
+			if (bytes < 1073741824ull) { //if in Mb range
+				ret = ofToString(bytes / float(1048576ul), decimalPrecision) + " MB";
 			} else {
-				ret = ofToString(bytes / float(1024 * 1024 * 1024), decimalPrecision) + " GB";
+				if (bytes < 1099511627776ull) { //if in Mb range
+					ret = ofToString(bytes / float(1073741824ull), decimalPrecision) + " GB";
+				} else {
+					ret = ofToString(bytes / float(1099511627776ull), decimalPrecision) + " TB";
+				}
 			}
 		}
 	}
