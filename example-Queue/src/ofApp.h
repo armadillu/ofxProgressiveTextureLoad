@@ -6,7 +6,7 @@
 
 //just in case we overrode it in ofxProgressiveTextureLoad.h by disabling measurements
 
-class testApp : public ofBaseApp{
+class ofApp : public ofBaseApp{
 	public:
 		void setup();
 		void update();

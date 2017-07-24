@@ -1,10 +1,10 @@
-#include "testApp.h"
+#include "ofApp.h"
 
 #include "ofxTimeMeasurements.h"
 
 string imgName = "img.png";
 
-void testApp::setup(){
+void ofApp::setup(){
 
 	ofBackground(33);
 	ofEnableAlphaBlending();
@@ -35,8 +35,8 @@ void testApp::setup(){
 
 	//add a listener to get notified when tex is fully loaded
 	//and one to let you know when the texture is drawable
-	ofAddListener(progressiveTextureLoader.textureReady, this, &testApp::textureReady);
-	ofAddListener(progressiveTextureLoader.textureDrawable, this, &testApp::textureDrawable);
+	ofAddListener(progressiveTextureLoader.textureReady, this, &ofApp::textureReady);
+	ofAddListener(progressiveTextureLoader.textureDrawable, this, &ofApp::textureDrawable);
 
 	//start loading the texture!
 	TIME_SAMPLE_START_NOIF("Total Load Time");
@@ -57,7 +57,7 @@ void testApp::setup(){
 }
 
 
-void testApp::update(){
+void ofApp::update(){
 	
 	progressiveTextureLoader.update();
 
@@ -67,12 +67,12 @@ void testApp::update(){
 
 }
 
-void testApp::textureDrawable(ofxProgressiveTextureLoad::ProgressiveTextureLoadEvent& arg){
+void ofApp::textureDrawable(ofxProgressiveTextureLoad::ProgressiveTextureLoadEvent& arg){
 	ofLogNotice() << "texture Drawable!";
 	textureReadyToDraw = true;
 }
 
-void testApp::textureReady(ofxProgressiveTextureLoad::ProgressiveTextureLoadEvent& arg){
+void ofApp::textureReady(ofxProgressiveTextureLoad::ProgressiveTextureLoadEvent& arg){
 	if (arg.ok){
 		ofLogNotice() << "textureReady!";
 		TIME_SAMPLE_STOP_NOIF("Total Load Time");
@@ -83,7 +83,7 @@ void testApp::textureReady(ofxProgressiveTextureLoad::ProgressiveTextureLoadEven
 }
 
 
-void testApp::draw(){
+void ofApp::draw(){
 
 	//texture
 	ofSetColor(255);
@@ -109,7 +109,7 @@ void testApp::draw(){
 }
 
 
-void testApp::keyPressed(int key){
+void ofApp::keyPressed(int key){
 	if(key == ' ' && !progressiveTextureLoader.isBusy()){
 		TIME_SAMPLE_START_NOIF("Total Load Time");
 		myTex->clear();
@@ -120,40 +120,40 @@ void testApp::keyPressed(int key){
 }
 
 
-void testApp::keyReleased(int key){
+void ofApp::keyReleased(int key){
 
 }
 
 
-void testApp::mouseMoved(int x, int y){
+void ofApp::mouseMoved(int x, int y){
 
 }
 
 
-void testApp::mouseDragged(int x, int y, int button){
+void ofApp::mouseDragged(int x, int y, int button){
 
 }
 
 
-void testApp::mousePressed(int x, int y, int button){
+void ofApp::mousePressed(int x, int y, int button){
 }
 
 
-void testApp::mouseReleased(int x, int y, int button){
-
-}
-
-
-void testApp::windowResized(int w, int h){
+void ofApp::mouseReleased(int x, int y, int button){
 
 }
 
 
-void testApp::gotMessage(ofMessage msg){
+void ofApp::windowResized(int w, int h){
 
 }
 
 
-void testApp::dragEvent(ofDragInfo dragInfo){ 
+void ofApp::gotMessage(ofMessage msg){
+
+}
+
+
+void ofApp::dragEvent(ofDragInfo dragInfo){ 
 
 }

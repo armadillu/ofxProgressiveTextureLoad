@@ -1,9 +1,9 @@
-#include "testApp.h"
+#include "ofApp.h"
 
 #include "ofxTimeMeasurements.h"
 
 
-void testApp::setup(){
+void ofApp::setup(){
 
 	imageNames.push_back("huge_a.png"); //rgba , 4channels
 	imageNames.push_back("huge.jpg");	//rgb, 3 channels
@@ -42,23 +42,23 @@ void testApp::setup(){
 															CV_INTER_AREA,		//opencv resize quality - to create mipmaps we need to downsample the original image; what resizing quality should we choose in doing so?
 															false				//high priority - puts request at beginning of the queue instead of at the end of it
 															);
-		ofAddListener(loader->textureReady, this, &testApp::textureReady);
-		ofAddListener(loader->textureDrawable, this, &testApp::textureDrawable);
+		ofAddListener(loader->textureReady, this, &ofApp::textureReady);
+		ofAddListener(loader->textureDrawable, this, &ofApp::textureDrawable);
 	}
 }
 
 
-void testApp::update(){
+void ofApp::update(){
 
 }
 
 
-void testApp::textureDrawable(ofxProgressiveTextureLoad::ProgressiveTextureLoadEvent& arg){
+void ofApp::textureDrawable(ofxProgressiveTextureLoad::ProgressiveTextureLoadEvent& arg){
 	ofLogNotice() << "texture Drawable!";
 }
 
 
-void testApp::textureReady(ofxProgressiveTextureLoad::ProgressiveTextureLoadEvent& arg){
+void ofApp::textureReady(ofxProgressiveTextureLoad::ProgressiveTextureLoadEvent& arg){
 	if (arg.ok){
 		//ofLogNotice() << "textureReady!";
 		ready[arg.tex] = true;
@@ -68,7 +68,7 @@ void testApp::textureReady(ofxProgressiveTextureLoad::ProgressiveTextureLoadEven
 }
 
 
-void testApp::draw(){
+void ofApp::draw(){
 
 	//texture
 	ofSetColor(255);
@@ -108,44 +108,44 @@ void testApp::draw(){
 }
 
 
-void testApp::keyPressed(int key){
+void ofApp::keyPressed(int key){
 }
 
 
-void testApp::keyReleased(int key){
-
-}
-
-
-void testApp::mouseMoved(int x, int y){
+void ofApp::keyReleased(int key){
 
 }
 
 
-void testApp::mouseDragged(int x, int y, int button){
+void ofApp::mouseMoved(int x, int y){
 
 }
 
 
-void testApp::mousePressed(int x, int y, int button){
-}
-
-
-void testApp::mouseReleased(int x, int y, int button){
+void ofApp::mouseDragged(int x, int y, int button){
 
 }
 
 
-void testApp::windowResized(int w, int h){
+void ofApp::mousePressed(int x, int y, int button){
+}
+
+
+void ofApp::mouseReleased(int x, int y, int button){
 
 }
 
 
-void testApp::gotMessage(ofMessage msg){
+void ofApp::windowResized(int w, int h){
 
 }
 
 
-void testApp::dragEvent(ofDragInfo dragInfo){ 
+void ofApp::gotMessage(ofMessage msg){
+
+}
+
+
+void ofApp::dragEvent(ofDragInfo dragInfo){ 
 
 }

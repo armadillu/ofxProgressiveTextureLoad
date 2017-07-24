@@ -24,8 +24,8 @@ public:
 
 	//its your responsibility to add listeners to the returned object (ret)
 	//to get notified when the texture is fully/partially loaded with:
-	//ofAddListener(ret->textureReady, this, &testApp::textureReady);
-	//ofAddListener(ret->textureDrawable, this, &testApp::textureDrawable);
+	//ofAddListener(ret->textureReady, this, &ofApp::textureReady);
+	//ofAddListener(ret->textureDrawable, this, &ofApp::textureDrawable);
 	ofxProgressiveTextureLoad* loadTexture(string path,
 										   ofTexture* tex,
 										   bool createMipMaps,
