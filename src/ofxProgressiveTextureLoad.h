@@ -6,8 +6,7 @@
 //
 //
 
-#ifndef __BaseApp__ofxProgressiveTextureLoad__
-#define __BaseApp__ofxProgressiveTextureLoad__
+#pragma once
 
 #include "ofMain.h"
 #include "ofxOpenCv.h"
@@ -233,5 +232,3 @@ private:
 
 };
 
-
-#endif /* defined(__BaseApp__ofxProgressiveTextureLoad__) */

@@ -1,0 +1,3 @@
+ofxHistoryPlot
+ofxTimeMeasurements
+ofxProgressiveTextureLoad

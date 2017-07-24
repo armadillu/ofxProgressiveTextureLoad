@@ -492,7 +492,6 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 
 	while (currentTime < maxTimeTakenPerFrame * 1000.0f && loadedScanLinesSoFar < pix->getHeight()) {
 
-
 		uint64_t time = ofGetElapsedTimeMicros();
 		unsigned char * data = pix->getData() + numC * (int)pix->getWidth() * loadedScanLinesSoFar;
 
@@ -530,130 +529,132 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 		#else
 		{
 		#endif
-			if (verbose) ofLogWarning("ofxProgressiveTextureLoad") << "tex " << texture->texData.textureTarget << " loading mipmap level " << mipmapLevel << " [" << pix->getWidth() << "x" << numLinesToLoadThisLoop << "]";
-				glTexSubImage2D(texture->texData.textureTarget,	//target
-								mipmapLevel,					//mipmap level
-								0,								//x offset
-								loadedScanLinesSoFar,			//y offset
-								pix->getWidth(),				//width
-								numLinesToLoadThisLoop,			//height >> numLinesPerLoop line per iteration
-								glFormat,						//format
-								glPixelType,					//type
-								data							//pixels
-								);
+			if(verbose){
+				ofLogWarning("ofxProgressiveTextureLoad") << "tex " << texture->texData.textureTarget << " loading mipmap level " << mipmapLevel << " [" << pix->getWidth() << "x" << numLinesToLoadThisLoop << "]";
 			}
-			loadedScanLinesSoFar += numLinesToLoadThisLoop;
-			scanlinesLoadedThisFrame += numLinesToLoadThisLoop;
-			uint64_t thisTime = ofGetElapsedTimeMicros() - time;
-			currentTime += thisTime;
-			if(verbose) ofLogNotice("ofxProgressiveTextureLoad") << "loop " << loops << " loaded " << numLinesToLoadThisLoop << " lines and took " << thisTime / 1000.0f << " ms";
-			loops++;
+			glTexSubImage2D(texture->texData.textureTarget,	//target
+							mipmapLevel,					//mipmap level
+							0,								//x offset
+							loadedScanLinesSoFar,			//y offset
+							pix->getWidth(),				//width
+							numLinesToLoadThisLoop,			//height >> numLinesPerLoop line per iteration
+							glFormat,						//format
+							glPixelType,					//type
+							data							//pixels
+							);
 		}
-		//if we finished this mipmap but there's time left, we could go on...
-		bool couldGoOn = false;
-		if(currentTime < maxTimeTakenPerFrame * 1000.0f){
-			couldGoOn = true;
-		}
-
-		if(verbose) ofLogNotice("ofxProgressiveTextureLoad") << "mipmapLevel " << mipmapLevel << " spent " << currentTime / 1000.0f << " ms and loaded " << scanlinesLoadedThisFrame << " lines across "<< loops << " loops";
-
-		lastFrameTime = currentTime / 1000.0f; //in ms!
-
-		if (loadedScanLinesSoFar >= pix->getHeight()){ //done!
-			mipMapLevelLoaded = true;
-			loadedScanLinesSoFar = 0;
-		}
-
-		glDisable(texture->texData.textureTarget);
-		glBindTexture(texture->texData.textureTarget, 0);
-		return couldGoOn;
+		loadedScanLinesSoFar += numLinesToLoadThisLoop;
+		scanlinesLoadedThisFrame += numLinesToLoadThisLoop;
+		uint64_t thisTime = ofGetElapsedTimeMicros() - time;
+		currentTime += thisTime;
+		if(verbose) ofLogNotice("ofxProgressiveTextureLoad") << "loop " << loops << " loaded " << numLinesToLoadThisLoop << " lines and took " << thisTime / 1000.0f << " ms";
+		loops++;
+	}
+	//if we finished this mipmap but there's time left, we could go on...
+	bool couldGoOn = false;
+	if(currentTime < maxTimeTakenPerFrame * 1000.0f){
+		couldGoOn = true;
 	}
 
+	if(verbose) ofLogNotice("ofxProgressiveTextureLoad") << "mipmapLevel " << mipmapLevel << " spent " << currentTime / 1000.0f << " ms and loaded " << scanlinesLoadedThisFrame << " lines across "<< loops << " loops";
 
-	void ofxProgressiveTextureLoad::draw(int x, int y, bool debugImages){
+	lastFrameTime = currentTime / 1000.0f; //in ms!
 
-		if(readyForDeletion && useOnlyOnce) return;
+	if (loadedScanLinesSoFar >= pix->getHeight()){ //done!
+		mipMapLevelLoaded = true;
+		loadedScanLinesSoFar = 0;
+	}
 
-		if(texture && debugImages){
-			if(isReadyToDrawWhileLoading() || state == IDLE ){
-				ofSetColor(255);
-				float ar = texture->getWidth() / float(texture->getHeight());
-				float xx = (texture->getWidth() - ofGetWidth()) * (ofGetMouseX() / float(ofGetWidth()));
-				float yy = (texture->getHeight() - ofGetHeight()) * (ofGetMouseY() / float(ofGetHeight()));
-				texture->draw(-xx, -yy);
-				texture->draw(0,
-							  0,
-							  ofClamp(ofGetMouseX(), 10, 300),
-							  ofClamp(ofGetMouseY(), 10, 300 / ar)
-							  );
-			}
-		}
+	glDisable(texture->texData.textureTarget);
+	glBindTexture(texture->texData.textureTarget, 0);
+	return couldGoOn;
+}
 
-		string msg;
-		switch (state) {
-			case IDLE:
-				ofDrawBitmapString("ofxProgressiveTextureLoad IDLE", x, y);
-				break;
 
-			case LOADING_PIXELS:
-				ofDrawBitmapString("ofxProgressiveTextureLoad LOADING_PIXELS", x, y);
-				break;
+void ofxProgressiveTextureLoad::draw(int x, int y, bool debugImages){
 
-			case RESIZING_FOR_MIPMAPS:
-				msg = "ofxProgressiveTextureLoad RESIZING_FOR_MIPMAPS\n";
-				msg += "currentMipMap: " + ofToString(currentMipMapLevel);
-				ofDrawBitmapString(msg, x, y);
-				break;
+	if(readyForDeletion && useOnlyOnce) return;
 
-			case ALLOC_TEXTURE:
-				ofDrawBitmapString("ofxProgressiveTextureLoad ALLOC_TEXTURE", x, y);
-				break;
-
-			case LOADING_TEX:{
-				msg = "ofxProgressiveTextureLoad LOADING_TEX\n";
-				float percent = 100.0f * loadedScanLinesSoFar / mipMapLevelPixels[0]->getHeight();
-				msg += "loaded: " + ofToString(percent,1) + "%";
-				ofDrawBitmapString(msg, x, y);
-			}break;
-
-			case LOADING_MIP_MAPS:{
-				msg = "ofxProgressiveTextureLoad LOADING_MIP_MAPS\n";
-				msg += "currentMipMap: " + ofToString(currentMipMapLevel);
-				float percent = 100.0f * loadedScanLinesSoFar / mipMapLevelPixels[0]->getHeight();
-				msg += "\nloaded: " + ofToString(percent,1) + "%";
-				ofDrawBitmapString(msg, x, y);
-			}break;
-
-			default:
-				break;
+	if(texture && debugImages){
+		if(isReadyToDrawWhileLoading() || state == IDLE ){
+			ofSetColor(255);
+			float ar = texture->getWidth() / float(texture->getHeight());
+			float xx = (texture->getWidth() - ofGetWidth()) * (ofGetMouseX() / float(ofGetWidth()));
+			float yy = (texture->getHeight() - ofGetHeight()) * (ofGetMouseY() / float(ofGetHeight()));
+			texture->draw(-xx, -yy);
+			texture->draw(0,
+						  0,
+						  ofClamp(ofGetMouseX(), 10, 300),
+						  ofClamp(ofGetMouseY(), 10, 300 / ar)
+						  );
 		}
 	}
 
-	void ofxProgressiveTextureLoad::stopLoadingAsap(){
-		cancelAsap = true;
-	}
+	string msg;
+	switch (state) {
+		case IDLE:
+			ofDrawBitmapString("ofxProgressiveTextureLoad IDLE", x, y);
+			break;
 
-	string ofxProgressiveTextureLoad::getStateString(){
-		string msg;
-		switch (state) {
-			case IDLE: return "IDLE";
-			case LOADING_PIXELS: return "LOADING_PIXELS";
-			case LOADING_FAILED: return "LOADING_FAILED";
-			case RESIZING_FOR_MIPMAPS: return "RESIZING_FOR_MIPMAPS";
-			case ALLOC_TEXTURE: return "ALLOC_TEXTURE";
-			case LOADING_TEX:{
-				msg += "LOADING_TEX (";
-				float percent = 100.0f * loadedScanLinesSoFar / mipMapLevelPixels[0]->getHeight();
-				msg += ofToString(percent,1) + "% loaded) " + (cancelAsap  ? " canceling!" : "");
-				return msg;
-			}
-			case LOADING_MIP_MAPS:{
-				msg += "LOADING_MIP_MAPS (mipMap: " + ofToString(currentMipMapLevel);
-				float percent = 100.0f * loadedScanLinesSoFar / mipMapLevelPixels[currentMipMapLevel]->getHeight();
-				msg += " " +ofToString(percent,1) + "%)" + (cancelAsap  ? " canceling! " : "");
-				return msg;
-			}
-		}
-		return "";
+		case LOADING_PIXELS:
+			ofDrawBitmapString("ofxProgressiveTextureLoad LOADING_PIXELS", x, y);
+			break;
+
+		case RESIZING_FOR_MIPMAPS:
+			msg = "ofxProgressiveTextureLoad RESIZING_FOR_MIPMAPS\n";
+			msg += "currentMipMap: " + ofToString(currentMipMapLevel);
+			ofDrawBitmapString(msg, x, y);
+			break;
+
+		case ALLOC_TEXTURE:
+			ofDrawBitmapString("ofxProgressiveTextureLoad ALLOC_TEXTURE", x, y);
+			break;
+
+		case LOADING_TEX:{
+			msg = "ofxProgressiveTextureLoad LOADING_TEX\n";
+			float percent = 100.0f * loadedScanLinesSoFar / mipMapLevelPixels[0]->getHeight();
+			msg += "loaded: " + ofToString(percent,1) + "%";
+			ofDrawBitmapString(msg, x, y);
+		}break;
+
+		case LOADING_MIP_MAPS:{
+			msg = "ofxProgressiveTextureLoad LOADING_MIP_MAPS\n";
+			msg += "currentMipMap: " + ofToString(currentMipMapLevel);
+			float percent = 100.0f * loadedScanLinesSoFar / mipMapLevelPixels[0]->getHeight();
+			msg += "\nloaded: " + ofToString(percent,1) + "%";
+			ofDrawBitmapString(msg, x, y);
+		}break;
+
+		default:
+			break;
 	}
-	
+}
+
+void ofxProgressiveTextureLoad::stopLoadingAsap(){
+	cancelAsap = true;
+}
+
+string ofxProgressiveTextureLoad::getStateString(){
+	string msg;
+	switch (state) {
+		case IDLE: return "IDLE";
+		case LOADING_PIXELS: return "LOADING_PIXELS";
+		case LOADING_FAILED: return "LOADING_FAILED";
+		case RESIZING_FOR_MIPMAPS: return "RESIZING_FOR_MIPMAPS";
+		case ALLOC_TEXTURE: return "ALLOC_TEXTURE";
+		case LOADING_TEX:{
+			msg += "LOADING_TEX (";
+			float percent = 100.0f * loadedScanLinesSoFar / mipMapLevelPixels[0]->getHeight();
+			msg += ofToString(percent,1) + "% loaded) " + (cancelAsap  ? " canceling!" : "");
+			return msg;
+		}
+		case LOADING_MIP_MAPS:{
+			msg += "LOADING_MIP_MAPS (mipMap: " + ofToString(currentMipMapLevel);
+			float percent = 100.0f * loadedScanLinesSoFar / mipMapLevelPixels[currentMipMapLevel]->getHeight();
+			msg += " " +ofToString(percent,1) + "%)" + (cancelAsap  ? " canceling! " : "");
+			return msg;
+		}
+	}
+	return "";
+}
+
