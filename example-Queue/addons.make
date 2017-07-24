@@ -1,3 +1,4 @@
 ofxHistoryPlot
 ofxTimeMeasurements
 ofxProgressiveTextureLoad
+ofxOpenCv
