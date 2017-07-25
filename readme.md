@@ -1,6 +1,7 @@
 # ofxProgressiveTextureLoad
 
 [![Build Status](https://travis-ci.org/armadillu/ofxProgressiveTextureLoad.svg?branch=master)](https://travis-ci.org/armadillu/ofxProgressiveTextureLoad)
+[![Build status](https://ci.appveyor.com/api/projects/status/2kx6dm9iykkmr7m2/branch/master?svg=true)](https://ci.appveyor.com/project/armadillu/ofxprogressivetextureload/branch/master)
 
 OpenFrameworks add-on to load grayscale, RGB and RGBA textures (with mipmaps) without blocking the app, load them to CPU on a background thread, resize to fit power or two requirements for mipmaps, resize and prepare all mipmaps levels, and progressively upload that data to the GPU across several frames. 
 
