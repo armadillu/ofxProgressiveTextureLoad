@@ -26,7 +26,7 @@ public:
 	//to get notified when the texture is fully/partially loaded with:
 	//ofAddListener(ret->textureReady, this, &ofApp::textureReady);
 	//ofAddListener(ret->textureDrawable, this, &ofApp::textureDrawable);
-	ofxProgressiveTextureLoad* loadTexture(string path,
+	ofxProgressiveTextureLoad* loadTexture(std::string path,
 										   ofTexture* tex,
 										   bool createMipMaps,
 										   bool ARB,
@@ -34,7 +34,7 @@ public:
 										   bool highPriority);
 
 	void draw(int x, int y);
-	string getStatsAsText();
+	std::string getStatsAsText();
 
 	void update( ofEventArgs & args ); //dont call it, it happens automatically!
 
@@ -65,7 +65,7 @@ public:
 	int getNumBusy();
 	int getNumPendingTextures(){return pending.size() + current.size(); }
 
-	static string bytesToHumanReadable(uint64_t bytes, int decimalPrecision);
+	static std::string bytesToHumanReadable(uint64_t bytes, int decimalPrecision);
 
 protected:
 
@@ -73,7 +73,7 @@ protected:
 
 	struct LoadRequest{
 		int ID;
-		string path;
+		std::string path;
 		bool withMipMaps;
 		ofxProgressiveTextureLoad * loader;
 		LoadRequest(){
@@ -86,8 +86,8 @@ protected:
 
 	// queues //
 
-	vector<LoadRequest> 					pending;
-	vector<LoadRequest>						current;
+	std::vector<LoadRequest> 					pending;
+	std::vector<LoadRequest>					current;
 
 	// params //
 
@@ -99,7 +99,7 @@ protected:
 	int					ids;
 	bool				verbose;
 
-	vector<ofxProgressiveTextureLoad*> leakedObjects;
+	std::vector<ofxProgressiveTextureLoad*> leakedObjects;
 	//those are objects whose thread is done, but the os is not ready for them to be deleted.
 	//This seems to happens on some OSs (ios) where one every N threads get into this weird state
 	//where they exited gracefully, but detach() failed and they can't be joined() either.

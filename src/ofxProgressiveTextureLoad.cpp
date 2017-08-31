@@ -10,6 +10,7 @@
 #include <math.h>
 #include "opencv2/imgproc/imgproc.hpp"
 
+using namespace std;
 
 int ofxProgressiveTextureLoad::numInstancesCreated = 0;
 int ofxProgressiveTextureLoad::numInstances = 0;

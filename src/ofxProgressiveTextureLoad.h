@@ -87,7 +87,7 @@ public:
 	//if using ARB Textures, no resize is necessary!
 	//you cant create mipmaps if using ARB!
 	void setup(ofTexture* tex, int resizeQuality = CV_INTER_CUBIC, bool useARB = false);
-	void loadTexture(string path, bool withMipMaps);
+	void loadTexture(std::string path, bool withMipMaps);
 	int getID(){return ID;}
 
 	void update();
@@ -114,7 +114,7 @@ public:
 	bool isBusy(){return !readyForDeletion || state == LOADING_PIXELS;}
 	bool isUploadingTextures(){return state == LOADING_TEX || state == LOADING_MIP_MAPS || state == ALLOC_TEXTURE; }
 	
-	string getStateString();
+	std::string getStateString();
 	bool isDoingWorkInThread();
 
 	void stopLoadingAsap(); //TODO! will get back to idle, tex remains as it is
@@ -132,7 +132,7 @@ public:
 
 		ofxProgressiveTextureLoad*		who;
 		ofTexture*						tex;
-		string							texturePath;
+		std::string							texturePath;
 		float 							elapsedTime;
 
 		ProgressiveTextureLoadEvent(){
@@ -185,7 +185,7 @@ private:
 
 	bool 				verbose;
 
-	string				imagePath;
+	std::string				imagePath;
 	bool 				createMipMaps;
 	bool				useARB;
 	bool 				pendingNotification;
@@ -207,7 +207,7 @@ private:
 	bool 				isSetup;
 
 
-	map<int, ofPixels*>	mipMapLevelPixels;
+	std::map<int, ofPixels*>	mipMapLevelPixels;
 
 	void threadedFunction();
 	void wrapUp();

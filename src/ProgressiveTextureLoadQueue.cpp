@@ -7,13 +7,11 @@
 //
 
 #include "ofMain.h"
-
 #include "ProgressiveTextureLoadQueue.h"
 
+using namespace std;
 
 ProgressiveTextureLoadQueue* ProgressiveTextureLoadQueue::singleton = NULL;
-
-
 
 ProgressiveTextureLoadQueue::ProgressiveTextureLoadQueue(){
 
