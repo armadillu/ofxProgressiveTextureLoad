@@ -19,6 +19,11 @@ See the examples for more info.
 
 Requires ofxOpenCV for image resizing, example uses ofxHistoryPlot and ofxTimeMeasurements to track performance, but they are not necessary.
 
+## Notes
+
+On Windows, if using an Nvidia GPU, make sure you go to the Nvidia Driver Settings >> Manage 3D Settings and set "Threaded Optimization" to OFF. Otherwise performance will be greatly reduced.
+
+
 
 License
 -------

@@ -83,7 +83,7 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 		}
 		//ofAddListener(ofEvents().update, this, &ofxProgressiveTextureLoad::update);
 		#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
-		TS_START_NIF("total tex load time " + ofToString(ID));
+		//TS_START_NIF("total tex load time " + ofToString(ID));
 		#endif
 	}else{
 		ofLogError("ofxProgressiveTextureLoad") << "cant load texture, busy!";
@@ -125,6 +125,9 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 						if(cancelAsap){
 							setState(IDLE);
 							pendingNotification = true;
+							#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
+							TS_STOP_NIF("loadPix " + ofToString(ID));
+							#endif
 							return;
 						}
 						#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
@@ -458,7 +461,7 @@ void ofxProgressiveTextureLoad::update(){
 		ev.texturePath = imagePath;
 		ofNotifyEvent(textureReady, ev, this);
 		#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
-		TS_STOP_NIF("total tex load time " + ofToString(ID));
+		//TS_STOP_NIF("total tex load time " + ofToString(ID));
 		#endif
 		setState(IDLE);
 		willBeReadyForDeletion = true;
