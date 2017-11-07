@@ -94,6 +94,7 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 void ofxProgressiveTextureLoad::threadedFunction(){
 
 	#ifdef TARGET_WIN32
+	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_LOWEST);
 	#elif defined(TARGET_LINUX)
 	pthread_setname_np(pthread_self(), "ofxProgressiveTextureLoad");
 	#else
