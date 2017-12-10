@@ -101,8 +101,6 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 	pthread_setname_np("ofxProgressiveTextureLoad");
 	#endif
 
-	float startTime = ofGetElapsedTimef();
-
 	while(true){
 		if(cancelAsap){
 			setState(IDLE);
