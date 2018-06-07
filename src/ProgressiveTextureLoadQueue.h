@@ -26,12 +26,16 @@ public:
 	//to get notified when the texture is fully/partially loaded with:
 	//ofAddListener(ret->textureReady, this, &ofApp::textureReady);
 	//ofAddListener(ret->textureDrawable, this, &ofApp::textureDrawable);
+	//NOTE that you should do nothing else with the retured (ofxProgressiveTextureLoad*) object
+	//dont keep that pointer around, it will become invalid as soon as the texture is fully loaded!
+	//its just provided for you to be able to add listeners so you can be notified when tex is loaded
 	ofxProgressiveTextureLoad* loadTexture(std::string path,
 										   ofTexture* tex,
 										   bool createMipMaps,
 										   bool ARB,
 										   int resizeQuality,
 										   bool highPriority);
+
 
 	void draw(int x, int y);
 	std::string getStatsAsText();
