@@ -147,6 +147,7 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 								config.numBytesPerPix = 1;
 								config.opencvFormat = CV_8UC1;
 								break;
+							default: break;
 						}
 						if(useARB){ //no mipmaps either way
 							mipMapLevelPixels[0] = &imagePixels;
@@ -429,6 +430,8 @@ void ofxProgressiveTextureLoad::update(){
 				}
 			}
 		}break;
+
+		default: break;
 	}
 
 	if(pendingNotification){
