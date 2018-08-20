@@ -67,7 +67,7 @@ public:
 	void setVerbose(bool v){verbose = v;}
 
 	int getNumBusy();
-	int getNumPendingTextures(){return pending.size() + current.size(); }
+	int getNumPendingTextures(){return (int)pending.size() + (int)current.size(); }
 
 	static std::string bytesToHumanReadable(uint64_t bytes, int decimalPrecision);
 
