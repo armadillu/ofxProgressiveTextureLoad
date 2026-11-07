@@ -19,6 +19,28 @@ See the examples for more info.
 
 Requires ofxOpenCV for image resizing, example uses ofxHistoryPlot and ofxTimeMeasurements to track performance, but they are not necessary.
 
+## Upload budgeting
+
+The queue uses one wall-clock deadline for all active loaders per frame and rotates
+which loader gets first access to it. Standalone loaders use their own frame budget.
+Allocation and mip-level transitions count toward the deadline. This is a soft limit:
+a GL call already in progress can stall past it, and notifications/cleanup still run.
+
+Batching defaults remain unchanged: 64 scanlines per call for standalone loaders
+and 16 for the queue. To opt into byte-sized batching, call `setBytesPerLoop()`.
+This uses contiguous, full-width strips, so skinny images upload more rows per
+call than wide images. A strip always contains at least one row, even when that
+row exceeds the target. The examples opt into a 256 KiB target.
+
+```cpp
+q->setTargetTimePerFrame(3.0f); // shared queue budget in milliseconds
+q->setBytesPerLoop(256 * 1024); // target bytes per upload call
+```
+
+Both setters also exist on standalone loaders. Calling `setScanlinesPerLoop()`
+selects fixed-row mode; call `setBytesPerLoop()` afterward to enable byte-sized mode.
+Batch-mode changes on the queue apply to pending and active loaders too.
+
 ## Notes
 
 On Windows, if using an Nvidia GPU, make sure you go to the Nvidia Driver Settings >> Manage 3D Settings and set "Threaded Optimization" to OFF. Otherwise performance will be greatly reduced.

@@ -19,6 +19,7 @@ float ofxProgressiveTextureLoad::numMbLoaded = 0;
 ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 
 	numLinesPerLoop = 64;
+	bytesPerLoop = 0; //preserve fixed-row batching unless explicitly enabled
 	maxTimeTakenPerFrame = 6.0; //ms
 	currentMipMapLevel = 0;
 	state = IDLE;
@@ -269,8 +270,15 @@ void ofxProgressiveTextureLoad::setState(State newState){
 }
 
 void ofxProgressiveTextureLoad::update(){
+	const uint64_t start = ofGetElapsedTimeMicros();
+	updateUntil(start + static_cast<uint64_t>(std::max(0.0f, maxTimeTakenPerFrame) * 1000.0f));
+}
 
+void ofxProgressiveTextureLoad::updateUntil(uint64_t deadline){
+
+	lastFrameTime = 0.0f;
 	if(readyForDeletion && useOnlyOnce) return;
+	const uint64_t updateStart = ofGetElapsedTimeMicros();
 	bool willBeReadyForDeletion = false;
 
 	#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
@@ -286,6 +294,12 @@ void ofxProgressiveTextureLoad::update(){
 		}break;
 
 		case ALLOC_TEXTURE:{
+			if(cancelAsap){
+				setState(IDLE);
+				wrapUp();
+				break;
+			}
+			if(ofGetElapsedTimeMicros() >= deadline) break;
 			texture->clear();
 			int newW = imagePixels.getWidth();
 			int newH = imagePixels.getHeight();
@@ -340,8 +354,7 @@ void ofxProgressiveTextureLoad::update(){
 				setState(IDLE);
 				wrapUp();
 			}else{
-				uint64_t currentTime = 0;
-				progressiveTextureUpload(currentMipMapLevel, currentTime);
+				progressiveTextureUpload(currentMipMapLevel, deadline);
 				if (mipMapLevelLoaded){
 					imagePixels.clear(); //dealloc original image pixels, we finished loading!
 					mipMapLevelPixels.clear();
@@ -357,8 +370,7 @@ void ofxProgressiveTextureLoad::update(){
 				wrapUp();
 			}else{
 				bool wrappingUp = false;
-				bool canGoOn = true;
-				uint64_t timeSpentSoFar = 0;
+				bool canGoOn = ofGetElapsedTimeMicros() < deadline;
 				while(canGoOn && !wrappingUp){
 					if (mipMapLevelLoaded){
 						#ifndef TARGET_OPENGLES
@@ -409,7 +421,7 @@ void ofxProgressiveTextureLoad::update(){
 
 					}
 					if(!wrappingUp){
-						canGoOn = progressiveTextureUpload(currentMipMapLevel, timeSpentSoFar);
+						canGoOn = progressiveTextureUpload(currentMipMapLevel, deadline);
 					}
 				}
 			}
@@ -418,6 +430,7 @@ void ofxProgressiveTextureLoad::update(){
 		default: break;
 	}
 
+	// Include allocation, binding, mip transitions and callbacks in wall-clock accounting.
 	if(pendingNotification){
 
 		pendingNotification = false;
@@ -454,6 +467,7 @@ void ofxProgressiveTextureLoad::update(){
 	#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
 	TS_STOP_ACC("ProgTexLoad u");
 	#endif
+	lastFrameTime = (ofGetElapsedTimeMicros() - updateStart) / 1000.0f;
 	if(willBeReadyForDeletion) readyForDeletion = true;
 }
 
@@ -464,7 +478,10 @@ void ofxProgressiveTextureLoad::wrapUp(){
 }
 
 
-bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64_t & currentTime){
+bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64_t deadline){
+	// Do not start GL work once another loader has consumed the shared budget.
+	if(ofGetElapsedTimeMicros() >= deadline) return false;
+	const uint64_t uploadStart = ofGetElapsedTimeMicros();
 
 	GLuint glFormat = config.glFormat;
 	GLuint glPixelType = GL_UNSIGNED_BYTE;
@@ -472,23 +489,25 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 	glEnable(texture->texData.textureTarget);
 	glBindTexture(texture->texData.textureTarget, texture->texData.textureID);
 	//texture->bind();
-	int numC = ofGetNumChannelsFromGLFormat(glFormat);
 
 	ofPixels * pix = mipMapLevelPixels[mipmapLevel];
 	int scanlinesLoadedThisFrame = 0;
 	int loops = 0;
 
-	ofSetPixelStoreiAlignment(GL_UNPACK_ALIGNMENT, pix->getBytesStride());
+	const size_t bytesPerRow = pix->getBytesStride();
+	const size_t rowsPerBatch = bytesPerLoop > 0
+		? std::max(size_t(1), bytesPerLoop / bytesPerRow)
+		: static_cast<size_t>(numLinesPerLoop);
+	ofSetPixelStoreiAlignment(GL_UNPACK_ALIGNMENT, bytesPerRow);
 
-	while (currentTime < maxTimeTakenPerFrame * 1000.0f && loadedScanLinesSoFar < pix->getHeight()) {
+	while (ofGetElapsedTimeMicros() < deadline && loadedScanLinesSoFar < pix->getHeight()) {
 
 		uint64_t time = ofGetElapsedTimeMicros();
-		unsigned char * data = pix->getData() + numC * (int)pix->getWidth() * loadedScanLinesSoFar;
+		unsigned char * data = pix->getData() + bytesPerRow * loadedScanLinesSoFar;
 
 		int numLinesToLoadThisLoop = pix->getHeight() - loadedScanLinesSoFar;
-		if (numLinesToLoadThisLoop > numLinesPerLoop){
-			numLinesToLoadThisLoop = numLinesPerLoop;
-		}
+		numLinesToLoadThisLoop = static_cast<int>(std::min(
+			static_cast<size_t>(numLinesToLoadThisLoop), rowsPerBatch));
 
 		if (mipMapLevelAllocPending && mipmapLevel != 0) { //level 0 mipmap is already allocated!
 
@@ -514,6 +533,9 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 
 		}
 
+		// Allocation may itself stall; postpone the upload if it consumed the budget.
+		if(ofGetElapsedTimeMicros() >= deadline) break;
+
 		#ifdef TARGET_WIN32
 		if (numLinesToLoadThisLoop > 1) { //This is a workaround for WINDOWS ATI DRIVERS crashing when uploading 1x1 tex data!?
 		#else
@@ -527,7 +549,7 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 							0,								//x offset
 							loadedScanLinesSoFar,			//y offset
 							pix->getWidth(),				//width
-							numLinesToLoadThisLoop,			//height >> numLinesPerLoop line per iteration
+							numLinesToLoadThisLoop,			//height: full-width strip
 							glFormat,						//format
 							glPixelType,					//type
 							data							//pixels
@@ -536,19 +558,10 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 		loadedScanLinesSoFar += numLinesToLoadThisLoop;
 		scanlinesLoadedThisFrame += numLinesToLoadThisLoop;
 		uint64_t thisTime = ofGetElapsedTimeMicros() - time;
-		currentTime += thisTime;
 		if(verbose) ofLogNotice("ofxProgressiveTextureLoad") << "loop " << loops << " loaded " << numLinesToLoadThisLoop << " lines and took " << thisTime / 1000.0f << " ms";
 		loops++;
 	}
-	//if we finished this mipmap but there's time left, we could go on...
-	bool couldGoOn = false;
-	if(currentTime < maxTimeTakenPerFrame * 1000.0f){
-		couldGoOn = true;
-	}
-
-	if(verbose) ofLogNotice("ofxProgressiveTextureLoad") << "mipmapLevel " << mipmapLevel << " spent " << currentTime / 1000.0f << " ms and loaded " << scanlinesLoadedThisFrame << " lines across "<< loops << " loops";
-
-	lastFrameTime = currentTime / 1000.0f; //in ms!
+	if(verbose) ofLogNotice("ofxProgressiveTextureLoad") << "mipmapLevel " << mipmapLevel << " spent " << (ofGetElapsedTimeMicros() - uploadStart) / 1000.0f << " ms and loaded " << scanlinesLoadedThisFrame << " lines across " << loops << " loops";
 
 	if (loadedScanLinesSoFar >= pix->getHeight()){ //done!
 		mipMapLevelLoaded = true;
@@ -557,7 +570,7 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 
 	glDisable(texture->texData.textureTarget);
 	glBindTexture(texture->texData.textureTarget, 0);
-	return couldGoOn;
+	return ofGetElapsedTimeMicros() < deadline;
 }
 
 

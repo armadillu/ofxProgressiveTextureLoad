@@ -9,6 +9,7 @@
 #pragma once
 
 #include "ofMain.h"
+#include <algorithm>
 #include "ofxOpenCv.h"
 
 //define OFX_PROG_TEX_LOADER_MEAURE_TIMINGS in your preProcessor macros to measure timings with ofxTimeMeasurements
@@ -92,11 +93,11 @@ public:
 
 	void update();
 
-	//for each update() call (one frame), the addon will loop uploading texture regions
-	//as scanlines, until we reach the target time per frame to be spent uploading texture data
-	//how many scanlines per loop will determine the granularity of the time accuracy. Less scanlines
-	//add more overhead, but should lead to more accurate stop times.
-	void setScanlinesPerLoop(int numLines){numLinesPerLoop = numLines;}
+	// Set fixed-row batches (the default); also disables byte-sized batching.
+	void setScanlinesPerLoop(int numLines){numLinesPerLoop = std::max(1, numLines); bytesPerLoop = 0;}
+
+	// Opt into full-width strips targeting this many bytes; at least one row.
+	void setBytesPerLoop(size_t bytes){bytesPerLoop = std::max(size_t(1), bytes);}
 
 	//how much time do you want ofxProgressiveTextureLoad to spend uploading data to the GPU per frame
 	void setTargetTimePerFrame(float ms){maxTimeTakenPerFrame = ms;}
@@ -177,7 +178,8 @@ private:
 	uint64_t			timer; //TODO drop this in OF 0.9, timings will be more accurate in windows
 
 	// speed params
-	int 				numLinesPerLoop; //we can increase that to reduce overhead
+	int 				numLinesPerLoop; //legacy fixed-row batch size
+	size_t				bytesPerLoop; //zero selects legacy fixed-row batches
 	float 				maxTimeTakenPerFrame; //ms to spend loading tex data on a single frame
 	float				texLodBias;
 
@@ -212,7 +214,8 @@ private:
 	void threadedFunction();
 	void wrapUp();
 	bool resizeImageForMipMaps();
-	bool progressiveTextureUpload(int mipmapLevel, uint64_t & currentTime);
+	void updateUntil(uint64_t deadline); //queue shares one absolute deadline across loaders
+	bool progressiveTextureUpload(int mipmapLevel, uint64_t deadline);
 
 	void setState(State newState);
 

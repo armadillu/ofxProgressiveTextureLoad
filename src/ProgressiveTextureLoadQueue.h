@@ -42,11 +42,11 @@ public:
 
 	void update( ofEventArgs & args ); //dont call it, it happens automatically!
 
-	//for each update() call (one frame), the addon will loop uploading texture regions
-	//as scanlines, until we reach the target time per frame to be spent uploading texture data
-	//how many scanlines per loop will determine the granularity of the time accuracy. Less scanlines
-	//add more overhead, but should lead to more accurate stop times.
+	// Set fixed-row batches (the default); also disables byte-sized batching.
 	void setScanlinesPerLoop(int numLines);
+
+	// Opt into full-width strips targeting this many bytes; at least one row.
+	void setBytesPerLoop(size_t bytes);
 
 	//how much time do you want ofxProgressiveTextureLoad to spend uploading data to the gpu per frame
 	void setTargetTimePerFrame(float ms);
@@ -96,7 +96,8 @@ protected:
 	// params //
 
 	int 				maxSimlutaneousThreads;
-	int 				numLinesPerLoop; //we can increase that to reduce overhead
+	int 				numLinesPerLoop; //legacy fixed-row batch size
+	size_t				bytesPerLoop; //zero selects legacy fixed-row batches
 	float 				maxTimeTakenPerFrame; //ms to spend loading tex data on a single frame
 	int					maxRequestsPerFrame;
 	float				texLodBias;

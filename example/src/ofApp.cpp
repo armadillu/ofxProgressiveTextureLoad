@@ -30,7 +30,7 @@ void ofApp::setup(){
 	progressiveTextureLoader.setVerbose(true);
 
 	//these 2 settings control how long it takes for the tex to load
-	progressiveTextureLoader.setScanlinesPerLoop(64);//see header for explanation
+	progressiveTextureLoader.setBytesPerLoop(256 * 1024); //target bytes per full-width upload strip
 	progressiveTextureLoader.setTargetTimePerFrame(10.0f); //how long to spend uploading data per frame, in ms
 
 	//add a listener to get notified when tex is fully loaded

@@ -16,6 +16,7 @@ ProgressiveTextureLoadQueue* ProgressiveTextureLoadQueue::singleton = NULL;
 ProgressiveTextureLoadQueue::ProgressiveTextureLoadQueue(){
 
 	numLinesPerLoop = 16;
+	bytesPerLoop = 0; //preserve fixed-row batching unless explicitly enabled
 	maxTimeTakenPerFrame = 1.0; //ms
 	texLodBias = -0.5;
 	maxRequestsPerFrame = 10;
@@ -39,7 +40,8 @@ ProgressiveTextureLoadQueue::loadTexture(string path,
 	r.loader = new ofxProgressiveTextureLoad();
 	r.loader->setWillBeUsedOnlyOnce(true);
 	r.loader->setVerbose(verbose);
-	r.loader->setScanlinesPerLoop(numLinesPerLoop);
+	if(bytesPerLoop > 0) r.loader->setBytesPerLoop(bytesPerLoop);
+	else r.loader->setScanlinesPerLoop(numLinesPerLoop);
 	r.loader->setTargetTimePerFrame(maxTimeTakenPerFrame);
 	r.loader->setTexLodBias(texLodBias);
 	r.loader->setup(tex, resizeQuality, ARB);
@@ -64,8 +66,17 @@ void ProgressiveTextureLoadQueue::setNumberSimultaneousLoads(int numThreads){
 }
 
 void ProgressiveTextureLoadQueue::setScanlinesPerLoop(int numLines){
+	bytesPerLoop = 0;
 	numLinesPerLoop = numLines;
 	if(numLinesPerLoop < 1) numLinesPerLoop = 1; //save dumb developers from themselves
+	for(auto & request : current) request.loader->setScanlinesPerLoop(numLinesPerLoop);
+	for(auto & request : pending) request.loader->setScanlinesPerLoop(numLinesPerLoop);
+}
+
+void ProgressiveTextureLoadQueue::setBytesPerLoop(size_t bytes){
+	bytesPerLoop = std::max(size_t(1), bytes);
+	for(auto & request : current) request.loader->setBytesPerLoop(bytesPerLoop);
+	for(auto & request : pending) request.loader->setBytesPerLoop(bytesPerLoop);
 }
 
 void ProgressiveTextureLoadQueue::setTargetTimePerFrame(float ms){
@@ -75,30 +86,14 @@ void ProgressiveTextureLoadQueue::setTargetTimePerFrame(float ms){
 
 void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 
+	const uint64_t start = ofGetElapsedTimeMicros();
+	const uint64_t deadline = start + static_cast<uint64_t>(maxTimeTakenPerFrame * 1000.0f);
 	vector<int> indicesToDelete;
 
-	//see who is finished
-	int numUploadingTextures = 0;
+	// Visit every loader even after expiry so cancellation and notifications still run.
 	for(size_t i = 0; i < current.size(); i++){
-
-		current[i].loader->update();
-
-		if(current[i].loader->canBeDeleted()){ //work is done
-
-			indicesToDelete.push_back(i);
-		}
-		if(current[i].loader->isUploadingTextures()){
-			numUploadingTextures++;
-		}
-	}
-
-	float timePerLoader = maxTimeTakenPerFrame;
-	if (numUploadingTextures > 0){
-		timePerLoader /= numUploadingTextures;
-	}
-
-	for(size_t i = 0; i < current.size(); i++){
-		current[i].loader->setTargetTimePerFrame(timePerLoader);
+		current[i].loader->updateUntil(deadline);
+		if(current[i].loader->canBeDeleted()) indicesToDelete.push_back(i);
 	}
 
 	//go though expired loaders and delete them
@@ -112,6 +107,9 @@ void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 		}
 		current.erase(current.begin() + indicesToDelete[i]);
 	}
+
+	// Give a different surviving loader first access to next frame's budget.
+	if(current.size() > 1) std::rotate(current.begin(), current.begin() + 1, current.end());
 
 	//is there stuff to do?
 	int c = 0;

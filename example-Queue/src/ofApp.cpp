@@ -26,7 +26,7 @@ void ofApp::setup(){
 	ProgressiveTextureLoadQueue * q = ProgressiveTextureLoadQueue::instance();
 
 	q->setTexLodBias(-0.5); //negative gives you lower mipmaps >> sharper
-	q->setScanlinesPerLoop(32); //how many scanlines to upload per batch; we will do as many batches we can fit each frame, given the user alloted time
+	q->setBytesPerLoop(256 * 1024); //target bytes per full-width upload strip
 	q->setTargetTimePerFrame(3); //set how many MS to spend at most each frame uploading texture data
 	q->setNumberSimultaneousLoads(1); //how many textures can be prepared in the back at the same time. This should be <= your number of CPU cores.
 	q->setVerbose(true);
