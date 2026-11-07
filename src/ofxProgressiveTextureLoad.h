@@ -108,7 +108,7 @@ public:
 
 	bool hasBeenAskedToCancelLoad(){ return cancelAsap; }
 
-	float getTimeSpentLastFrame(){ return lastFrameTime && isDone();} //in ms!
+	float getTimeSpentLastFrame(){ return lastFrameTime;} //in ms!
 	void setVerbose(bool v){verbose = v;}
 	bool canBeDeleted(){return readyForDeletion;}
 	bool isBusy(){return !readyForDeletion || state == LOADING_PIXELS;}

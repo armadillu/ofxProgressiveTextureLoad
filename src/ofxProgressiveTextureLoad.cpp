@@ -220,39 +220,25 @@ bool ofxProgressiveTextureLoad::resizeImageForMipMaps(){
 		return false;
 	}
 
-	//fill in an opencv image
-	cv::Mat mipMap0(imagePixels.getHeight(), imagePixels.getWidth(), config.opencvFormat);
-	memcpy( mipMap0.data,  imagePixels.getData(), imagePixels.getWidth() * imagePixels.getHeight() * numC);
+	// Keep the decoded pixels as level 0; OpenCV only borrows their storage.
+	mipMapLevelPixels[0] = &imagePixels;
+	cv::Mat previousLevel(newH, newW, config.opencvFormat,
+						  imagePixels.getData(), imagePixels.getBytesStride());
 
-	if(cancelAsap){
-		return false;
-	}
-
-	ofPixels *pix = new ofPixels();
-	pix->setFromPixels(mipMap0.data, newW, newH, numC);
-	mipMapLevelPixels[0] = pix;
-	//ofSaveImage(*pix, "pix" + ofToString(0) + ".jpg" ); //debug!
-
-	for(int currentMipMapLevel = 1 ; currentMipMapLevel < mipMapLevel; currentMipMapLevel++){
-
+	for(int level = 1; level < mipMapLevel; level++){
 		if(cancelAsap){
 			return false;
 		}
 
-		ofPoint newSize = getMipMapImageSize(currentMipMapLevel);
-
-		//TS_START_NIF("resize mipmap " + ofToString(currentMipMapLevel));
-		int www = newSize.x; //mipMap0.cols/2;
-		int hhh = newSize.y; //mipMap0.rows/2;
-		if (www < 1) www = 1; if (hhh < 1) hhh = 1;
-		cv::resize(mipMap0, mipMap0, cv::Size(www, hhh), 0, 0, resizeQuality);
-		ofPixels * tmpPix;
-		tmpPix = new ofPixels();
-		tmpPix->setFromPixels(mipMap0.data, mipMap0.cols, mipMap0.rows, numC);
-		mipMapLevelPixels[currentMipMapLevel] = tmpPix;
-		//ofLog() << "mipmaps for level " << currentMipMapLevel << " ready (" << tmpPix->getWidth() << ", " << tmpPix->getWidth()<< ")";
-		//TS_STOP_NIF("resize mipmap " + ofToString(currentMipMapLevel));
-		//ofSaveImage(*tmpPix, "pix" + ofToString(currentMipMapLevel) + ".jpg" ); //debug!
+		ofPoint newSize = getMipMapImageSize(level);
+		// Register ownership before allocating/resizing so failure cleanup can free it.
+		ofPixels *pixels = new ofPixels();
+		mipMapLevelPixels[level] = pixels;
+		pixels->allocate(newSize.x, newSize.y, numC);
+		cv::Mat nextLevel(pixels->getHeight(), pixels->getWidth(), config.opencvFormat,
+						  pixels->getData(), pixels->getBytesStride());
+		cv::resize(previousLevel, nextLevel, nextLevel.size(), 0, 0, resizeQuality);
+		previousLevel = nextLevel;
 	}
 	return true;
 }
@@ -334,9 +320,7 @@ void ofxProgressiveTextureLoad::update(){
 			texture->texData.tex_w = imagePixels.getWidth();
 			texture->texData.tex_h = imagePixels.getHeight();
 
-			if(createMipMaps){
-				imagePixels.clear(); //dealloc original image, we have all the ofPixels in a map!
-			}
+			// imagePixels backs mip level 0 and must survive until uploading finishes.
 			mipMapLevelLoaded = false;
 			if(createMipMaps){
 				currentMipMapLevel = mipMapLevelPixels.size() - 1; //start by loading the smallest image (deepest mipmap)
