@@ -83,7 +83,7 @@ void ofxProgressiveTextureLoad::loadTexture(string path, bool withMipMaps){
 			ofLogError("ofxProgressiveTextureLoad") << "cant detach thread!";
 		}
 		//ofAddListener(ofEvents().update, this, &ofxProgressiveTextureLoad::update);
-		#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
+		#ifdef OFX_PROG_TEX_LOADER_MEASURE_TIMINGS
 		//TS_START_NIF("total tex load time " + ofToString(ID));
 		#endif
 	}else{
@@ -111,7 +111,7 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 		switch (state) {
 
 			case LOADING_PIXELS:{
-				#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
+				#ifdef OFX_PROG_TEX_LOADER_MEASURE_TIMINGS
 				TS_START_NIF("loadPix " + ofToString(ID));
 				#endif
 				try{
@@ -124,12 +124,12 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 						if(cancelAsap){
 							setState(IDLE);
 							pendingNotification = true;
-							#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
+							#ifdef OFX_PROG_TEX_LOADER_MEASURE_TIMINGS
 							TS_STOP_NIF("loadPix " + ofToString(ID));
 							#endif
 							return;
 						}
-						#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
+						#ifdef OFX_PROG_TEX_LOADER_MEASURE_TIMINGS
 						TS_STOP_NIF("loadPix " + ofToString(ID));
 						#endif
 						switch (imagePixels.getImageType()) {
@@ -165,7 +165,7 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 						}
 					}
 				}catch(...){
-					#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
+					#ifdef OFX_PROG_TEX_LOADER_MEASURE_TIMINGS
 					TS_STOP_NIF("loadPix " + ofToString(ID));
 					#endif
 					ofLogError("ofxProgressiveTextureLoad") << "exception in threadedFunction()";
@@ -175,7 +175,7 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 			}break;
 
 			case RESIZING_FOR_MIPMAPS:
-				#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
+				#ifdef OFX_PROG_TEX_LOADER_MEASURE_TIMINGS
 				TS_START_NIF("resizeImageForMipMaps " + ofToString(ID));
 				#endif
 				try{
@@ -190,7 +190,7 @@ void ofxProgressiveTextureLoad::threadedFunction(){
 					setState(LOADING_FAILED); //mm TODO!
 					return;
 				}
-				#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
+				#ifdef OFX_PROG_TEX_LOADER_MEASURE_TIMINGS
 				TS_STOP_NIF("resizeImageForMipMaps " + ofToString(ID));
 				#endif
 				 //working around the of thread issue where very short lived threads cause expcetions sometimes
@@ -281,7 +281,7 @@ void ofxProgressiveTextureLoad::updateUntil(uint64_t deadline){
 	const uint64_t updateStart = ofGetElapsedTimeMicros();
 	bool willBeReadyForDeletion = false;
 
-	#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
+	#ifdef OFX_PROG_TEX_LOADER_MEASURE_TIMINGS
 	TS_START_ACC("ProgTexLoad u");
 	#endif
 
@@ -340,7 +340,7 @@ void ofxProgressiveTextureLoad::updateUntil(uint64_t deadline){
 				currentMipMapLevel = mipMapLevelPixels.size() - 1; //start by loading the smallest image (deepest mipmap)
 				setState(LOADING_MIP_MAPS);
 				mipMapLevelAllocPending = true; //otherwise we dont alloc space for the 1st mipmap level, and we get GL_INVALID_OPERATION
-				#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
+				#ifdef OFX_PROG_TEX_LOADER_MEASURE_TIMINGS
 				TS_START_NIF("upload mipmaps " + ofToString(ID));
 				#endif
 			}else{
@@ -411,7 +411,7 @@ void ofxProgressiveTextureLoad::updateUntil(uint64_t deadline){
 						if (currentMipMapLevel == 0){ //all mipmaps loaded! done!
 							wrappingUp = true;
 							wrapUp();
-							#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
+							#ifdef OFX_PROG_TEX_LOADER_MEASURE_TIMINGS
 							TS_STOP_NIF("upload mipmaps " + ofToString(ID));
 							#endif
 							setState(IDLE);
@@ -458,13 +458,13 @@ void ofxProgressiveTextureLoad::updateUntil(uint64_t deadline){
 		ev.elapsedTime = ofGetElapsedTimef() - startTime;
 		ev.texturePath = imagePath;
 		ofNotifyEvent(textureReady, ev, this);
-		#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
+		#ifdef OFX_PROG_TEX_LOADER_MEASURE_TIMINGS
 		//TS_STOP_NIF("total tex load time " + ofToString(ID));
 		#endif
 		setState(IDLE);
 		willBeReadyForDeletion = true;
 	}
-	#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
+	#ifdef OFX_PROG_TEX_LOADER_MEASURE_TIMINGS
 	TS_STOP_ACC("ProgTexLoad u");
 	#endif
 	lastFrameTime = (ofGetElapsedTimeMicros() - updateStart) / 1000.0f;

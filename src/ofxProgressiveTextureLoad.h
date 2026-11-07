@@ -12,9 +12,9 @@
 #include <algorithm>
 #include "ofxOpenCv.h"
 
-//define OFX_PROG_TEX_LOADER_MEAURE_TIMINGS in your preProcessor macros to measure timings with ofxTimeMeasurements
+//define OFX_PROG_TEX_LOADER_MEASURE_TIMINGS in your preProcessor macros to measure timings with ofxTimeMeasurements
 
-#ifdef OFX_PROG_TEX_LOADER_MEAURE_TIMINGS
+#ifdef OFX_PROG_TEX_LOADER_MEASURE_TIMINGS
 	#include "ofxTimeMeasurements.h"
 #endif
 
