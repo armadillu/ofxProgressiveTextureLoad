@@ -29,7 +29,7 @@ public:
 	//NOTE that you should do nothing else with the returned (ofxProgressiveTextureLoad*) object
 	//dont keep that pointer around, it will become invalid as soon as the texture is fully loaded!
 	//its just provided for you to be able to add listeners so you can be notified when tex is loaded
-	ofxProgressiveTextureLoad* loadTexture(std::string path,
+	ofxProgressiveTextureLoad* loadTexture(const std::string & path,
 										   ofTexture* tex,
 										   bool createMipMaps,
 										   bool ARB,

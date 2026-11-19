@@ -8,6 +8,7 @@
 
 #include "ofMain.h"
 #include "ProgressiveTextureLoadQueue.h"
+#include <utility>
 
 using namespace std;
 
@@ -27,7 +28,7 @@ ProgressiveTextureLoadQueue::ProgressiveTextureLoadQueue(){
 }
 
 ofxProgressiveTextureLoad*
-ProgressiveTextureLoadQueue::loadTexture(string path,
+ProgressiveTextureLoadQueue::loadTexture(const std::string & path,
 										 ofTexture* tex,
 										 bool createMipMaps,
 										 bool ARB,
@@ -35,7 +36,7 @@ ProgressiveTextureLoadQueue::loadTexture(string path,
 										 bool highPriority){
 
 	LoadRequest r;
-	r.path = path;
+	r.path = std::move(path);
 	r.withMipMaps = createMipMaps;
 	r.loader = new ofxProgressiveTextureLoad();
 	r.loader->setWillBeUsedOnlyOnce(true);
@@ -48,12 +49,13 @@ ProgressiveTextureLoadQueue::loadTexture(string path,
 	r.ID = ids;
 	ids++;
 
+	auto* loader = r.loader;
 	if(highPriority)
-		pending.insert(pending.begin(), r);
+		pending.insert(pending.begin(), std::move(r));
 	else
-		pending.push_back(r);
+		pending.push_back(std::move(r));
 
-	return r.loader;
+	return loader;
 }
 
 void ProgressiveTextureLoadQueue::setMaxThreads(int numThreads){
@@ -121,7 +123,7 @@ void ProgressiveTextureLoadQueue::update( ofEventArgs & args ){
 			pending.erase(pending.begin()); //TODO this doesnt seem safe
 			continue;
 		}
-		current.push_back(pending[0]);
+		current.push_back(std::move(pending.front()));
 		pending.erase(pending.begin());
 		int indx = current.size()-1;
 		current[indx].loader->loadTexture(current[indx].path, current[indx].withMipMaps);
