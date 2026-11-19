@@ -16,8 +16,7 @@ ProgressiveTextureLoadQueue* ProgressiveTextureLoadQueue::singleton = NULL;
 
 ProgressiveTextureLoadQueue::ProgressiveTextureLoadQueue(){
 
-	numLinesPerLoop = 16;
-	bytesPerLoop = 0; //preserve fixed-row batching unless explicitly enabled
+	bytesPerLoop = ofxProgressiveTextureLoad::defaultBytesPerLoop;
 	maxTimeTakenPerFrame = 1.0; //ms
 	texLodBias = -0.5;
 	maxRequestsPerFrame = 10;
@@ -41,8 +40,7 @@ ProgressiveTextureLoadQueue::loadTexture(const std::string & path,
 	r.loader = new ofxProgressiveTextureLoad();
 	r.loader->setWillBeUsedOnlyOnce(true);
 	r.loader->setVerbose(verbose);
-	if(bytesPerLoop > 0) r.loader->setBytesPerLoop(bytesPerLoop);
-	else r.loader->setScanlinesPerLoop(numLinesPerLoop);
+	r.loader->setBytesPerLoop(bytesPerLoop);
 	r.loader->setTargetTimePerFrame(maxTimeTakenPerFrame);
 	r.loader->setTexLodBias(texLodBias);
 	r.loader->setup(tex, resizeQuality, ARB);
@@ -65,14 +63,6 @@ void ProgressiveTextureLoadQueue::setMaxThreads(int numThreads){
 
 void ProgressiveTextureLoadQueue::setNumberSimultaneousLoads(int numThreads){
 	setMaxThreads(numThreads);
-}
-
-void ProgressiveTextureLoadQueue::setScanlinesPerLoop(int numLines){
-	bytesPerLoop = 0;
-	numLinesPerLoop = numLines;
-	if(numLinesPerLoop < 1) numLinesPerLoop = 1; //save dumb developers from themselves
-	for(auto & request : current) request.loader->setScanlinesPerLoop(numLinesPerLoop);
-	for(auto & request : pending) request.loader->setScanlinesPerLoop(numLinesPerLoop);
 }
 
 void ProgressiveTextureLoadQueue::setBytesPerLoop(size_t bytes){

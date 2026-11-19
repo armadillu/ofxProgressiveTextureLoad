@@ -18,8 +18,7 @@ float ofxProgressiveTextureLoad::numMbLoaded = 0;
 
 ofxProgressiveTextureLoad::ofxProgressiveTextureLoad(){
 
-	numLinesPerLoop = 64;
-	bytesPerLoop = 0; //preserve fixed-row batching unless explicitly enabled
+	bytesPerLoop = defaultBytesPerLoop;
 	maxTimeTakenPerFrame = 6.0; //ms
 	currentMipMapLevel = 0;
 	state = IDLE;
@@ -495,9 +494,7 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 	int loops = 0;
 
 	const size_t bytesPerRow = pix->getBytesStride();
-	const size_t rowsPerBatch = bytesPerLoop > 0
-		? std::max(size_t(1), bytesPerLoop / bytesPerRow)
-		: static_cast<size_t>(numLinesPerLoop);
+	const size_t rowsPerBatch = std::max(size_t(1), bytesPerLoop / bytesPerRow);
 	ofSetPixelStoreiAlignment(GL_UNPACK_ALIGNMENT, bytesPerRow);
 
 	while (ofGetElapsedTimeMicros() < deadline && loadedScanLinesSoFar < pix->getHeight()) {
@@ -537,7 +534,7 @@ bool ofxProgressiveTextureLoad::progressiveTextureUpload(int mipmapLevel, uint64
 		if(ofGetElapsedTimeMicros() >= deadline) break;
 
 		#ifdef TARGET_WIN32
-		if (numLinesToLoadThisLoop > 1) { //This is a workaround for WINDOWS ATI DRIVERS crashing when uploading 1x1 tex data!?
+		if (pix->getWidth() > 1 || pix->getHeight() > 1) { // Legacy ATI driver workaround for 1x1 texture levels.
 		#else
 		{
 		#endif

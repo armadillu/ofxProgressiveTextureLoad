@@ -93,10 +93,7 @@ public:
 
 	void update();
 
-	// Set fixed-row batches (the default); also disables byte-sized batching.
-	void setScanlinesPerLoop(int numLines){numLinesPerLoop = std::max(1, numLines); bytesPerLoop = 0;}
-
-	// Opt into full-width strips targeting this many bytes; at least one row.
+	// Target this many bytes per full-width upload strip, with a minimum of one row.
 	void setBytesPerLoop(size_t bytes){bytesPerLoop = std::max(size_t(1), bytes);}
 
 	//how much time do you want ofxProgressiveTextureLoad to spend uploading data to the GPU per frame
@@ -178,8 +175,8 @@ private:
 	uint64_t			timer; //TODO drop this in OF 0.9, timings will be more accurate in windows
 
 	// speed params
-	int 				numLinesPerLoop; //legacy fixed-row batch size
-	size_t				bytesPerLoop; //zero selects legacy fixed-row batches
+	static constexpr size_t defaultBytesPerLoop = 256 * 1024;
+	size_t				bytesPerLoop;
 	float 				maxTimeTakenPerFrame; //ms to spend loading tex data on a single frame
 	float				texLodBias;
 
