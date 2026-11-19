@@ -44,24 +44,30 @@ public:
 
 	// Target this many bytes per full-width upload strip, with a minimum of one row.
 	void setBytesPerLoop(size_t bytes);
+	size_t getBytesPerLoop() const { return bytesPerLoop; }
 
 	//how much time do you want ofxProgressiveTextureLoad to spend uploading data to the gpu per frame
 	void setTargetTimePerFrame(float ms);
+	float getTargetTimePerFrame() const { return maxTimeTakenPerFrame; }
 
 	//how much of the queue can we dispatch per frame
 	void setMaximumRequestsPerFrame(int max){maxRequestsPerFrame = max;};
+	int getMaximumRequestsPerFrame() const { return maxRequestsPerFrame; }
 
 	//how many textures to load at the same time! (threads)
 	OF_DEPRECATED_MSG("Use setMaxThreads() instead.", void setNumberSimultaneousLoads(int numThreads) );
 	void setMaxThreads(int numThreads);
+	int getMaxThreads() const { return maxSimlutaneousThreads; }
 
 	//in mipmap levels. used to tweak which mipmap to use; helps make mipmaps sharper or blurrier.
 	//0 is neutral; negative is lower mipmaps (sharper), positive is higher mipmaps (blurrier)
 	void setTexLodBias(float bias){texLodBias = bias;}
+	float getTexLodBias() const { return texLodBias; }
 
 
 	//set debug print logging
 	void setVerbose(bool v){verbose = v;}
+	bool getVerbose() const { return verbose; }
 
 	int getNumBusy();
 	int getNumPendingTextures(){return (int)pending.size() + (int)current.size(); }
